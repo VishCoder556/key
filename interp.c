@@ -63,6 +63,7 @@ unsigned int constant_pool_count;
 struct Constant methods[50];
 arr_constant *registers;
 struct Instruction instructions[50];
+arr_constant *variables;
 
 
 struct syscall_info {
@@ -479,6 +480,15 @@ char *parse(char *data){
             return parse(registers->value[i+1].bytes);
         };
     };
+    for (int i=0; i<=variables->len; i+=2){
+        if (strcmp(variables->value[i].bytes, data) == 0){
+            if (variables->value[i].type == CONSTANT_LEN){
+                sprintf(data, "%d", strlen(parse(variables->value[i].bytes)));
+                return data;
+            };
+            return parse(variables->value[i+1].bytes);
+        };
+    };
     return data;
 };
 
@@ -490,8 +500,10 @@ void run1(int i, int *pass, int instruction_count){
             };
 
         if (instructions[i].type == INST_MOV){
+            int found = 0;
             for (int z=0; z<=registers->len; z+=2){
                 if (strcmp(registers->value[z].bytes, instructions[i].operand1) == 0){
+                    found = 1;
                     strcpy(registers->value[z+1].bytes, parse(instructions[i].operand2));
                     if(isalpha(parse(instructions[i].operand2)[0])) {
                         registers->value[z+1].type = CONSTANT_STRING;
@@ -499,6 +511,19 @@ void run1(int i, int *pass, int instruction_count){
                         registers->value[z+1].type = CONSTANT_INT;
                     }
                 };
+            };
+            if (found == 0){
+                struct Constant s;
+				s.type = CONSTANT_METHOD;
+				strcpy(s.bytes, instructions[i].operand1);
+				arr_push(variables, s);
+				if (parse(instructions[i].operand2)[0] == '"'){
+					s.type = CONSTANT_STRING;
+				}else {
+					s.type = CONSTANT_INT;
+				};
+				strcpy(s.bytes, parse(instructions[i].operand2));
+				arr_push(variables, s);
             };
         }else if (instructions[i].type == INST_SYSCALL){
 			char *rax = (char*)arr_get(registers, 1).bytes;
@@ -515,6 +540,8 @@ void run1(int i, int *pass, int instruction_count){
 				sprintf(arr_get(registers, 1).bytes, "%d", open(rdi, O_RDWR | O_CREAT));
 			}else if (atoi(rax) == 3) {
 				close(atoi(rdi));
+			}else if (atoi(rax) == 60) {
+				exit(atoi(rdi));
 			}else {
                 char err[500];
 
@@ -606,6 +633,7 @@ void run1(int i, int *pass, int instruction_count){
 void run(char *input_file){
     // fprintf(stderr, "{1}");
     registers = arr_new(constant);
+    variables = arr_new(constant);
     constant a = {CONSTANT_REGISTER_NAME, "rax"};
     constant b = {CONSTANT_REGISTER_NAME, "rbx"};
     constant c = {CONSTANT_REGISTER_NAME, "rcx"};

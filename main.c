@@ -428,7 +428,7 @@ struct Instruction{
 	uint8_t operand1[10];
 	uint8_t operand2[10];
 };
-
+typedef struct Constant Constant;
 struct PersonalByteCodeCompiler {
 	unsigned int constant_pool_count;
 	struct Constant constant_pool[50];
@@ -452,9 +452,11 @@ struct AssemblyTranspiler {
 	int stack_size;
 	arr_variable *variables;
 };
+new_arrtype(Constant);
 
 struct Simulate {
-	arr_string *variables;
+	arr_string *constants;
+	arr_Constant *variables;
 	arr_string *registers;
 	int variablelength;
 };
@@ -629,10 +631,15 @@ char *transpile_expr(struct Transpiler *transpiler, char *expr){
 		return expr;
 	};
 
+	for (int z=0; z<=transpiler->simulation.constants->len-1; z+=2){
+		if (strcmp(arr_get(transpiler->simulation.constants, z), expr) == 0){
+			// arr_get(transpiler->simulation.constants, z+1) = transpile_expr(transpiler, arr_get(transpiler->simulation.constants, z+1));
+			return transpile_expr(transpiler, arr_get(transpiler->simulation.constants, z+1));
+		};
+	};
 	for (int z=0; z<=transpiler->simulation.variables->len-1; z+=2){
-		if (strcmp(arr_get(transpiler->simulation.variables, z), expr) == 0){
-			// arr_get(transpiler->simulation.variables, z+1) = transpile_expr(transpiler, arr_get(transpiler->simulation.variables, z+1));
-			return transpile_expr(transpiler, arr_get(transpiler->simulation.variables, z+1));
+		if (strcmp(arr_get(transpiler->simulation.variables, z).bytes, expr) == 0){
+			return transpile_expr(transpiler, arr_get(transpiler->simulation.variables, z+1).bytes);
 		};
 	};
 
@@ -774,7 +781,6 @@ char *parse_asm(struct Transpiler *transpiler, int i){
 
 char *parse_expr_asm(struct Transpiler *transpiler, int i){
 	for (int j=0; j<=transpiler->normalCompiler.stack_size-1; j++){
-			// printf("{%s, %s}", arr_get(transpiler->arr, i).data, arr_get(transpiler->normalCompiler.variables, j).name);
 		if (strcmp(arr_get(transpiler->arr, i).data, arr_get(transpiler->normalCompiler.variables, j).name) == 0){
 			char res[50];
 			sprintf(res, "%d", (transpiler->normalCompiler.stack_size-arr_get(transpiler->normalCompiler.variables, j).pos-1)*8);
@@ -793,8 +799,8 @@ char rax[500];
 void transpile(struct Transpiler *transpiler, int i){
 	if (transpiler->status == Simulate) {
 		if (strcmp(arr_get(transpiler->arr, i+1).data, ":") == 0){
-			arr_push(transpiler->simulation.variables,  arr_get(transpiler->arr, i).data);
-			arr_push(transpiler->simulation.variables,  arr_get(transpiler->arr, i+2).data);
+			arr_push(transpiler->simulation.constants,  arr_get(transpiler->arr, i).data);
+			arr_push(transpiler->simulation.constants,  arr_get(transpiler->arr, i+2).data);
 		} else if (strcmp(arr_get(transpiler->arr, i+1).data, "{") == 0){
 			current_function = arr_get(transpiler->arr, i).data;
 		} 
@@ -807,10 +813,25 @@ void transpile(struct Transpiler *transpiler, int i){
 				// if (strcmp(arr_get(transpiler->arr, i).data, "") == 0){
 				// 	val = arr_get(transpiler->arr, i-1).data;
 				// };
+				int found = 0;
 				for (int y=0; y<=transpiler->simulation.registers->len-1; y+=2){
 					if (strcmp(val, arr_get(transpiler->simulation.registers, y)) == 0){
+						found = 1;
 						arr_get(transpiler->simulation.registers, y+1) = transpile_expr(transpiler, arr_get(transpiler->arr, i+2).data);
 					};
+				};
+				if (found == 0){
+					struct Constant s;
+					s.type = CONSTANT_METHOD;
+					strcpy(s.bytes, val);
+					arr_push(transpiler->simulation.variables, s);
+					if (arr_get(transpiler->arr, i+2).data[0] == '"'){
+						s.type = CONSTANT_STRING;
+					}else {
+						s.type = CONSTANT_INT;
+					};
+					strcpy(s.bytes, transpile_expr(transpiler, arr_get(transpiler->arr, i+2).data));
+					arr_push(transpiler->simulation.variables, s);
 				};
 			}else if (strcmp(arr_get(transpiler->arr, i).data, "inc") == 0){
 				char *val = arr_get(transpiler->arr, i+1).data;
@@ -1263,8 +1284,9 @@ void transpile(struct Transpiler *transpiler, int i){
 void run_transpiler(struct Transpiler *transpiler){
 	current_function = "<global scope>";
 	if (transpiler->status == Simulate){
-		transpiler->simulation.variables = arr_new(string);
+		transpiler->simulation.constants = arr_new(string);
 		transpiler->simulation.registers = arr_new(string);
+		transpiler->simulation.variables = arr_new(Constant);
 		arr_push(transpiler->simulation.registers, "rax");
 		arr_push(transpiler->simulation.registers, "");
 		arr_push(transpiler->simulation.registers, "rbx");
