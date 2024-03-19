@@ -1,0 +1,22 @@
+{
+    "files.associations": {
+        "*.k": "c",
+        "array.h": "c",
+        "string.h": "c",
+        "array": "c",
+        "vector": "c",
+        "__bit_reference": "c",
+        "__node_handle": "c",
+        "bitset": "c",
+        "__memory": "c",
+        "limits": "c",
+        "optional": "c",
+        "ratio": "c",
+        "system_error": "c",
+        "tuple": "c",
+        "type_traits": "c",
+        "chrono": "c",
+        "locale": "c",
+        "sstream": "c"
+    }
+}
