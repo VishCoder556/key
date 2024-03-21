@@ -20,6 +20,7 @@ enum ConstantType{
 	CONSTANT_STRING,
 	CONSTANT_LEN,
 	CONSTANT_METHOD,
+	CONSTANT_EQ,
 	CONSTANT_METHOD_END,
     CONSTANT_REGISTER_NAME, // Only when being ran
     CONSTANT_VAR            // Also only for when being ran
@@ -44,12 +45,13 @@ enum InstructionType{
 	INST_DEC
 };
 
+
 struct Instruction{
 	uint8_t method[10];
 	enum InstructionType type;
 	int col, row;
 	uint8_t operand1[10];
-	uint8_t operand2[10];
+	struct Constant operand2;
 };
 
 #include "../libs/array/array.h"
@@ -457,7 +459,33 @@ void help(){
 	printf("	-h: Prints this manual\n");
 }
 
-char *parse(char *data){
+int gettype(char *b){
+    if(b[0] == '\"'){return CONSTANT_STRING;}
+    else if(isnumber(b[0])){return CONSTANT_INT;}
+    else{return CONSTANT_VAR;};
+};
+
+char *parse(struct Constant cons){
+    char *data = cons.bytes;
+    if (gettype(data) == CONSTANT_INT){
+        return data;
+    };
+    if (cons.type == CONSTANT_EQ){
+        char *conbytecpy = strdup(cons.bytes);
+        char *a = strtok(conbytecpy, "^(*&");
+        struct Constant con;
+        con.type = CONSTANT_VAR;
+        memcpy(con.bytes, a, sizeof(con.bytes));
+        char *b = cons.bytes+strlen(a)+strlen("^(*&");
+        struct Constant con2;
+        con2.type = gettype(b);
+        memcpy(con2.bytes, b, sizeof(con2.bytes));
+        char datas[50];
+        unsigned int ab = strcmp(parse(con), parse(con2)) == 0;
+        sprintf(datas, "%d", ab);
+        data = strdup(datas);
+        return data;
+    };
     if (data[0] == '"'){
         data++;
         return data;
@@ -465,30 +493,31 @@ char *parse(char *data){
     for (int i=0; i<=constant_names_count; i++){
         if (strcmp(constant_names[i], data) == 0){
             if (constants[i].type == CONSTANT_LEN){
-                sprintf(data, "%d", strlen(parse(constants[i].bytes)));
+                sprintf(data, "%d", strlen(parse(constants[i])));
                 return data;
             };
-            return parse(constants[i].bytes);
+            return parse(constants[i]);
         };
     };
     for (int i=0; i<=registers_count; i+=2){
         if (strcmp(registers->value[i].bytes, data) == 0){
             if (registers->value[i].type == CONSTANT_LEN){
-                sprintf(data, "%d", strlen(parse(registers->value[i].bytes)));
+                sprintf(data, "%d", strlen(parse(registers->value[i])));
                 return data;
             };
-            return parse(registers->value[i+1].bytes);
+            return parse(registers->value[i+1]);
         };
     };
     for (int i=0; i<=variables->len; i+=2){
         if (strcmp(variables->value[i].bytes, data) == 0){
             if (variables->value[i].type == CONSTANT_LEN){
-                sprintf(data, "%d", strlen(parse(variables->value[i].bytes)));
+                sprintf(data, "%d", strlen(parse(variables->value[i])));
                 return data;
             };
-            return parse(variables->value[i+1].bytes);
+            return parse(variables->value[i+1]);
         };
     };
+    data = cons.bytes;
     return data;
 };
 
@@ -508,7 +537,7 @@ void run1(int i, int *pass, int instruction_count){
                     if(isalpha(parse(instructions[i].operand2)[0])) {
                         registers->value[z+1].type = CONSTANT_STRING;
                     } else {
-                        registers->value[z+1].type = CONSTANT_INT;
+                        registers->value[z+1].type = instructions[i].operand2.type;
                     }
                 };
             };
@@ -586,10 +615,10 @@ void run1(int i, int *pass, int instruction_count){
             for (int z=0; z<=registers->len; z+=2){
                 if (strcmp(registers->value[z].bytes, instructions[i].operand1) == 0){
                     if (arr_get(registers, z+1).type == CONSTANT_INT) {
-					sprintf(arr_get(registers, z+1).bytes, "%d", atoi(arr_get(registers, z+1).bytes)+atoi(instructions[i].operand2));
+					sprintf(arr_get(registers, z+1).bytes, "%d", atoi(arr_get(registers, z+1).bytes)+atoi(instructions[i].operand2.bytes));
                     }else if(arr_get(registers, z+1).type == CONSTANT_STRING){
                         char *bytes = strdup(arr_get(registers, z+1).bytes);
-                        bytes+=atoi(instructions[i].operand2);
+                        bytes+=atoi(instructions[i].operand2.bytes);
                         strcpy(arr_get(registers, z+1).bytes, bytes);
                     }
                 };
@@ -598,10 +627,10 @@ void run1(int i, int *pass, int instruction_count){
             for (int z=0; z<=registers->len; z+=2){
                 if (strcmp(registers->value[z].bytes, instructions[i].operand1) == 0){
                     if (arr_get(registers, z+1).type == CONSTANT_INT) {
-					sprintf(arr_get(registers, z+1).bytes, "%d", atoi(arr_get(registers, z+1).bytes)-atoi(instructions[i].operand2));
+					sprintf(arr_get(registers, z+1).bytes, "%d", atoi(arr_get(registers, z+1).bytes)-atoi(instructions[i].operand2.bytes));
                     }else if(arr_get(registers, z+1).type == CONSTANT_STRING){
                         char *bytes = strdup(arr_get(registers, z+1).bytes);
-                        bytes-=atoi(instructions[i].operand2);
+                        bytes-=atoi(instructions[i].operand2.bytes);
                         strcpy(arr_get(registers, z+1).bytes, bytes);
                     }
                 };

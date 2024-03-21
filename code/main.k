@@ -1,4 +1,4 @@
-msg:"Activ8d.\n"
+msg:"Hello World.\n"
 msglen:$msg
 
 main {

@@ -17,7 +17,12 @@
         "type_traits": "c",
         "chrono": "c",
         "locale": "c",
-        "sstream": "c"
+        "sstream": "c",
+        "__hash_table": "c",
+        "__split_buffer": "c",
+        "initializer_list": "c",
+        "unordered_map": "c",
+        "typeinfo": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }
