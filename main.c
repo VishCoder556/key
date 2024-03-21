@@ -407,6 +407,10 @@ enum ConstantType{
 	CONSTANT_LEN,
 	CONSTANT_METHOD,
 	CONSTANT_EQ,
+	CONSTANT_LTE,
+	CONSTANT_LT,
+	CONSTANT_GTE,
+	CONSTANT_GT,
 	CONSTANT_METHOD_END
 };
 
@@ -572,6 +576,10 @@ void split(arr_String *arr, char data[300]){
 		}
 		else if(data[i] == ':'){
 			create_token(":");
+		}else if(data[i] == '>'){
+			create_token(">");
+		}else if(data[i] == '<'){
+			create_token("<");
 		}else if(data[i] == ';'){
 			create_token(";");
 		}else if(data[i] == '='){
@@ -640,6 +648,26 @@ char *transpile_expr(struct Transpiler *transpiler, int z, char *expr){
 		char res[50];
 		sprintf(res, "%d", strcmp(transpile_expr(transpiler, z, arr_get(transpiler->arr, z).data), transpile_expr(transpiler, z+3, arr_get(transpiler->arr, z+3).data)) == 0);
 		return res;
+	}else if (alreadyWentThrough == false && strcmp(arr_get(transpiler->arr, z+1).data, ">") == 0 && strcmp(arr_get(transpiler->arr, z+2).data, "=") == 0){
+		alreadyWentThrough = true;
+		char res[50];
+		sprintf(res, "%d", atoi(transpile_expr(transpiler, z, arr_get(transpiler->arr, z).data)) >= atoi(transpile_expr(transpiler, z+3, arr_get(transpiler->arr, z+3).data)));
+		return res;
+	}else if (alreadyWentThrough == false && strcmp(arr_get(transpiler->arr, z+1).data, "<") == 0 && strcmp(arr_get(transpiler->arr, z+2).data, "=") == 0){
+		alreadyWentThrough = true;
+		char res[50];
+		sprintf(res, "%d", atoi(transpile_expr(transpiler, z, arr_get(transpiler->arr, z).data)) <= atoi(transpile_expr(transpiler, z+3, arr_get(transpiler->arr, z+3).data)));
+		return res;
+	}else if (alreadyWentThrough == false && strcmp(arr_get(transpiler->arr, z+1).data, ">") == 0){
+		alreadyWentThrough = true;
+		char res[50];
+		sprintf(res, "%d", atoi(transpile_expr(transpiler, z, arr_get(transpiler->arr, z).data)) > atoi(transpile_expr(transpiler, z+3, arr_get(transpiler->arr, z+2).data)));
+		return res;
+	}else if (alreadyWentThrough == false && strcmp(arr_get(transpiler->arr, z+1).data, "<") == 0){
+		alreadyWentThrough = true;
+		char res[50];
+		sprintf(res, "%d", atoi(transpile_expr(transpiler, z, arr_get(transpiler->arr, z).data)) < atoi(transpile_expr(transpiler, z+3, arr_get(transpiler->arr, z+2).data)));
+		return res;
 	};
 	if(isnumber(expr[0])){
 		return expr;
@@ -685,6 +713,38 @@ struct Constant transpile_expr_byte(struct Transpiler *transpiler, int i){
 		strcpy((char*)con.bytes, transpile_expr_byte(transpiler, i).bytes);
 		strcat((char*)con.bytes, "^(*&");
 		strcat((char*)con.bytes, transpile_expr_byte(transpiler, i+3).bytes);
+		alreadyWentThrough = false;
+		return con;
+	}else if (alreadyWentThrough == false && strcmp(arr_get(transpiler->arr, i+1).data, "<") == 0 && strcmp(arr_get(transpiler->arr, i+2).data, "=") == 0){
+		alreadyWentThrough = true;
+		con.type = CONSTANT_LTE;
+		strcpy((char*)con.bytes, transpile_expr_byte(transpiler, i).bytes);
+		strcat((char*)con.bytes, "^(*&");
+		strcat((char*)con.bytes, transpile_expr_byte(transpiler, i+3).bytes);
+		alreadyWentThrough = false;
+		return con;
+	}else if (alreadyWentThrough == false && strcmp(arr_get(transpiler->arr, i+1).data, ">") == 0 && strcmp(arr_get(transpiler->arr, i+2).data, "=") == 0){
+		alreadyWentThrough = true;
+		con.type = CONSTANT_GTE;
+		strcpy((char*)con.bytes, transpile_expr_byte(transpiler, i).bytes);
+		strcat((char*)con.bytes, "^(*&");
+		strcat((char*)con.bytes, transpile_expr_byte(transpiler, i+3).bytes);
+		alreadyWentThrough = false;
+		return con;
+	}else if (alreadyWentThrough == false && strcmp(arr_get(transpiler->arr, i+1).data, ">") == 0){
+		alreadyWentThrough = true;
+		con.type = CONSTANT_GT;
+		strcpy((char*)con.bytes, transpile_expr_byte(transpiler, i).bytes);
+		strcat((char*)con.bytes, "^(*&");
+		strcat((char*)con.bytes, transpile_expr_byte(transpiler, i+2).bytes);
+		alreadyWentThrough = false;
+		return con;
+	}else if (alreadyWentThrough == false && strcmp(arr_get(transpiler->arr, i+1).data, "<") == 0){
+		alreadyWentThrough = true;
+		con.type = CONSTANT_LT;
+		strcpy((char*)con.bytes, transpile_expr_byte(transpiler, i).bytes);
+		strcat((char*)con.bytes, "^(*&");
+		strcat((char*)con.bytes, transpile_expr_byte(transpiler, i+2).bytes);
 		alreadyWentThrough = false;
 		return con;
 	}else if (arr_get(transpiler->arr, i).data[0] == '$'){
@@ -843,6 +903,122 @@ char *parse_expr_asm(struct Transpiler *transpiler, int i){
 				strcat(transpiler->normalCompiler.code, "\t");
 			};
 			strcat(transpiler->normalCompiler.code, "sete    al\n\tmovzx r15, al\n");
+			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
+				strcat(transpiler->normalCompiler.code, "\t");
+			};
+			strcat(transpiler->normalCompiler.code, "mov r14, __w\n");
+			return "r15";
+	}else if (strcmp(arr_get(transpiler->arr, i+1).data, ">") == 0 && strcmp(arr_get(transpiler->arr, i+2).data, "=") == 0 && alreadyWentThrough == false){
+			alreadyWentThrough = true;
+			char *a = parse_expr_asm(transpiler, i);
+			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
+				strcat(transpiler->normalCompiler.code, "\t");
+			};
+			strcat(transpiler->normalCompiler.code, "mov r15, ");
+			strcat(transpiler->normalCompiler.code, a);
+			strcat(transpiler->normalCompiler.code, "\n");
+			a = parse_expr_asm(transpiler, i+3);
+			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
+				strcat(transpiler->normalCompiler.code, "\t");
+			};
+			strcat(transpiler->normalCompiler.code, "mov r14, ");
+			strcat(transpiler->normalCompiler.code, a);
+			strcat(transpiler->normalCompiler.code, "\n");
+			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
+				strcat(transpiler->normalCompiler.code, "\t");
+			};
+			strcat(transpiler->normalCompiler.code, "cmp r14, r15\n");
+			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
+				strcat(transpiler->normalCompiler.code, "\t");
+			};
+			strcat(transpiler->normalCompiler.code, "setle    al\n\tmovzx r15, al\n");
+			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
+				strcat(transpiler->normalCompiler.code, "\t");
+			};
+			strcat(transpiler->normalCompiler.code, "mov r14, __w\n");
+			return "r15";
+	}else if (strcmp(arr_get(transpiler->arr, i+1).data, "<") == 0 && strcmp(arr_get(transpiler->arr, i+2).data, "=") == 0 && alreadyWentThrough == false){
+			alreadyWentThrough = true;
+			char *a = parse_expr_asm(transpiler, i);
+			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
+				strcat(transpiler->normalCompiler.code, "\t");
+			};
+			strcat(transpiler->normalCompiler.code, "mov r15, ");
+			strcat(transpiler->normalCompiler.code, a);
+			strcat(transpiler->normalCompiler.code, "\n");
+			a = parse_expr_asm(transpiler, i+3);
+			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
+				strcat(transpiler->normalCompiler.code, "\t");
+			};
+			strcat(transpiler->normalCompiler.code, "mov r14, ");
+			strcat(transpiler->normalCompiler.code, a);
+			strcat(transpiler->normalCompiler.code, "\n");
+			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
+				strcat(transpiler->normalCompiler.code, "\t");
+			};
+			strcat(transpiler->normalCompiler.code, "cmp r14, r15\n");
+			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
+				strcat(transpiler->normalCompiler.code, "\t");
+			};
+			strcat(transpiler->normalCompiler.code, "setge    al\n\tmovzx r15, al\n");
+			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
+				strcat(transpiler->normalCompiler.code, "\t");
+			};
+			strcat(transpiler->normalCompiler.code, "mov r14, __w\n");
+			return "r15";
+	}else if (strcmp(arr_get(transpiler->arr, i+1).data, ">") == 0 && alreadyWentThrough == false){
+			alreadyWentThrough = true;
+			char *a = parse_expr_asm(transpiler, i);
+			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
+				strcat(transpiler->normalCompiler.code, "\t");
+			};
+			strcat(transpiler->normalCompiler.code, "mov r15, ");
+			strcat(transpiler->normalCompiler.code, a);
+			strcat(transpiler->normalCompiler.code, "\n");
+			a = parse_expr_asm(transpiler, i+2);
+			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
+				strcat(transpiler->normalCompiler.code, "\t");
+			};
+			strcat(transpiler->normalCompiler.code, "mov r14, ");
+			strcat(transpiler->normalCompiler.code, a);
+			strcat(transpiler->normalCompiler.code, "\n");
+			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
+				strcat(transpiler->normalCompiler.code, "\t");
+			};
+			strcat(transpiler->normalCompiler.code, "cmp r14, r15\n");
+			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
+				strcat(transpiler->normalCompiler.code, "\t");
+			};
+			strcat(transpiler->normalCompiler.code, "setl    al\n\tmovzx r15, al\n");
+			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
+				strcat(transpiler->normalCompiler.code, "\t");
+			};
+			strcat(transpiler->normalCompiler.code, "mov r14, __w\n");
+			return "r15";
+	}else if (strcmp(arr_get(transpiler->arr, i+1).data, "<") == 0 && alreadyWentThrough == false){
+			alreadyWentThrough = true;
+			char *a = parse_expr_asm(transpiler, i);
+			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
+				strcat(transpiler->normalCompiler.code, "\t");
+			};
+			strcat(transpiler->normalCompiler.code, "mov r15, ");
+			strcat(transpiler->normalCompiler.code, a);
+			strcat(transpiler->normalCompiler.code, "\n");
+			a = parse_expr_asm(transpiler, i+2);
+			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
+				strcat(transpiler->normalCompiler.code, "\t");
+			};
+			strcat(transpiler->normalCompiler.code, "mov r14, ");
+			strcat(transpiler->normalCompiler.code, a);
+			strcat(transpiler->normalCompiler.code, "\n");
+			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
+				strcat(transpiler->normalCompiler.code, "\t");
+			};
+			strcat(transpiler->normalCompiler.code, "cmp r14, r15\n");
+			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
+				strcat(transpiler->normalCompiler.code, "\t");
+			};
+			strcat(transpiler->normalCompiler.code, "setg    al\n\tmovzx r15, al\n");
 			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
 				strcat(transpiler->normalCompiler.code, "\t");
 			};

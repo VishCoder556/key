@@ -7,9 +7,9 @@ start:
 	mov r14, __w
 		mov rax, 60
 		mov r15, qword [r14 + 2]
-	mov r14, 5
+	mov r14, 9
 	cmp r14, r15
-	sete    al
+	setg    al
 	movzx r15, al
 	mov r14, __w
 mov rdi, r15

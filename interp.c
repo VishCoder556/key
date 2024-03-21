@@ -21,6 +21,10 @@ enum ConstantType{
 	CONSTANT_LEN,
 	CONSTANT_METHOD,
 	CONSTANT_EQ,
+	CONSTANT_LTE,
+	CONSTANT_LT,
+	CONSTANT_GTE,
+	CONSTANT_GT,
 	CONSTANT_METHOD_END,
     CONSTANT_REGISTER_NAME, // Only when being ran
     CONSTANT_VAR            // Also only for when being ran
@@ -482,6 +486,66 @@ char *parse(struct Constant cons){
         memcpy(con2.bytes, b, sizeof(con2.bytes));
         char datas[50];
         unsigned int ab = strcmp(parse(con), parse(con2)) == 0;
+        sprintf(datas, "%d", ab);
+        data = strdup(datas);
+        return data;
+    }else if (cons.type == CONSTANT_LT){
+        char *conbytecpy = strdup(cons.bytes);
+        char *a = strtok(conbytecpy, "^(*&");
+        struct Constant con;
+        con.type = CONSTANT_VAR;
+        memcpy(con.bytes, a, sizeof(con.bytes));
+        char *b = cons.bytes+strlen(a)+strlen("^(*&");
+        struct Constant con2;
+        con2.type = gettype(b);
+        memcpy(con2.bytes, b, sizeof(con2.bytes));
+        char datas[50];
+        unsigned int ab = atoi(parse(con)) < atoi(parse(con2));
+        sprintf(datas, "%d", ab);
+        data = strdup(datas);
+        return data;
+    }else if (cons.type == CONSTANT_LTE){
+        char *conbytecpy = strdup(cons.bytes);
+        char *a = strtok(conbytecpy, "^(*&");
+        struct Constant con;
+        con.type = CONSTANT_VAR;
+        memcpy(con.bytes, a, sizeof(con.bytes));
+        char *b = cons.bytes+strlen(a)+strlen("^(*&");
+        struct Constant con2;
+        con2.type = gettype(b);
+        memcpy(con2.bytes, b, sizeof(con2.bytes));
+        char datas[50];
+        unsigned int ab = atoi(parse(con)) <= atoi(parse(con2));
+        sprintf(datas, "%d", ab);
+        data = strdup(datas);
+        return data;
+    }else if (cons.type == CONSTANT_GT){
+        char *conbytecpy = strdup(cons.bytes);
+        char *a = strtok(conbytecpy, "^(*&");
+        struct Constant con;
+        con.type = CONSTANT_VAR;
+        memcpy(con.bytes, a, sizeof(con.bytes));
+        char *b = cons.bytes+strlen(a)+strlen("^(*&");
+        struct Constant con2;
+        con2.type = gettype(b);
+        memcpy(con2.bytes, b, sizeof(con2.bytes));
+        char datas[50];
+        unsigned int ab = atoi(parse(con)) > atoi(parse(con2));
+        sprintf(datas, "%d", ab);
+        data = strdup(datas);
+        return data;
+    }else if (cons.type == CONSTANT_GTE){
+        char *conbytecpy = strdup(cons.bytes);
+        char *a = strtok(conbytecpy, "^(*&");
+        struct Constant con;
+        con.type = CONSTANT_VAR;
+        memcpy(con.bytes, a, sizeof(con.bytes));
+        char *b = cons.bytes+strlen(a)+strlen("^(*&");
+        struct Constant con2;
+        con2.type = gettype(b);
+        memcpy(con2.bytes, b, sizeof(con2.bytes));
+        char datas[50];
+        unsigned int ab = atoi(parse(con)) >= atoi(parse(con2));
         sprintf(datas, "%d", ab);
         data = strdup(datas);
         return data;

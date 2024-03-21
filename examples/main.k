@@ -1,6 +1,6 @@
 main {
     int x = 5;
     rax = 60; // Exit syscall
-    rdi = x == 5;
+    rdi = x < 9;
     syscall;
 }
