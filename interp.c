@@ -46,7 +46,9 @@ enum InstructionType{
     INST_INC,
     INST_ADD,
 	INST_SUB,
-	INST_DEC
+	INST_DEC,
+	INST_IF,
+	INST_IFEND
 };
 
 
@@ -471,7 +473,7 @@ int gettype(char *b){
 
 char *parse(struct Constant cons){
     char *data = cons.bytes;
-    if (gettype(data) == CONSTANT_INT){
+    if (cons.type == CONSTANT_INT){
         return data;
     };
     if (cons.type == CONSTANT_EQ){
@@ -508,7 +510,7 @@ char *parse(struct Constant cons){
         char *conbytecpy = strdup(cons.bytes);
         char *a = strtok(conbytecpy, "^(*&");
         struct Constant con;
-        con.type = CONSTANT_VAR;
+        con.type = gettype(a);
         memcpy(con.bytes, a, sizeof(con.bytes));
         char *b = cons.bytes+strlen(a)+strlen("^(*&");
         struct Constant con2;
@@ -586,8 +588,19 @@ char *parse(struct Constant cons){
 };
 
 void run1(int i, int *pass, int instruction_count);
+#include <stdbool.h>
+bool inIfStatement = false;
+bool goThroughIfStatement = false;
 
 void run1(int i, int *pass, int instruction_count){
+    if (instructions[i].type == INST_IFEND){
+        inIfStatement = false;
+        goThroughIfStatement = false;
+    };
+    // printf("{%d}", instructions[i].type);
+    if (inIfStatement && !goThroughIfStatement){
+        return;
+    };
     if (strcmp(instructions[i].method, "main") && *pass == 0){
                 return;
             };
@@ -651,6 +664,9 @@ void run1(int i, int *pass, int instruction_count){
                 }
 					error(err, "SyscallError", instructions[i]);
             }
+        }else if(instructions[i].type == INST_IF){
+            inIfStatement = true;
+            goThroughIfStatement = strcmp(parse(instructions[i].operand2), "1") == 0;
         }else if(instructions[i].type == INST_INC){
             for (int z=0; z<=registers->len; z+=2){
                 if (strcmp(registers->value[z].bytes, instructions[i].operand1) == 0){

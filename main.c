@@ -429,7 +429,9 @@ enum InstructionType{
     INST_INC,
     INST_ADD,
 	INST_SUB,
-	INST_DEC
+	INST_DEC,
+	INST_IF,
+	INST_IFEND
 };
 
 struct Instruction{
@@ -643,6 +645,9 @@ char *transpile_phrase(struct Transpiler *transpiler, char *expr){
 };
 
 char *transpile_expr(struct Transpiler *transpiler, int z, char *expr){
+	if(strcmp(arr_get(transpiler->arr, z).data, "(") == 0){
+		return transpile_expr(transpiler, z+1, arr_get(transpiler->arr, z+1).data);
+	}
 	if (alreadyWentThrough == false && strcmp(arr_get(transpiler->arr, z+1).data, "=") == 0 && strcmp(arr_get(transpiler->arr, z+2).data, "=") == 0){
 		alreadyWentThrough = true;
 		char res[50];
@@ -664,13 +669,20 @@ char *transpile_expr(struct Transpiler *transpiler, int z, char *expr){
 		sprintf(res, "%d", atoi(transpile_expr(transpiler, z, arr_get(transpiler->arr, z).data)) > atoi(transpile_expr(transpiler, z+3, arr_get(transpiler->arr, z+2).data)));
 		return res;
 	}else if (alreadyWentThrough == false && strcmp(arr_get(transpiler->arr, z+1).data, "<") == 0){
+		char *operand1 = arr_get(transpiler->arr, z).data;
+		char *operand2 = arr_get(transpiler->arr, z+2).data;
+		if (!isnumber(operand1[0])){
+			operand1 = transpile_expr(transpiler, z, arr_get(transpiler->arr, z).data);
+		};
+		if (!isnumber(operand2[0])){
+			operand2 = transpile_expr(transpiler, z+2, arr_get(transpiler->arr, z+2).data);
+		};
 		alreadyWentThrough = true;
 		char res[50];
-		sprintf(res, "%d", atoi(transpile_expr(transpiler, z, arr_get(transpiler->arr, z).data)) < atoi(transpile_expr(transpiler, z+3, arr_get(transpiler->arr, z+2).data)));
+		sprintf(res, "%d", atoi(operand1) < atoi(operand2));
 		return res;
-	};
-	if(isnumber(expr[0])){
-		return expr;
+	}else if(isnumber(expr[0])){
+		return strdup(expr);
 	};
 	if (expr[0] == '$'){
 		// for (int y=0; y<=strlen(transpiler->arr->value[y].data); y++){
@@ -857,7 +869,7 @@ void error(struct Transpiler *transpiler, char *info, char* type, char* i, int t
 
 #undef print_ln_error
 
-void transpile(struct Transpiler *transpiler, int i);
+void transpile(struct Transpiler *transpiler, int *ip);
 
 char *parse_asm(struct Transpiler *transpiler, int i){
 	char *a = arr_get(transpiler->arr, i).data;
@@ -879,6 +891,9 @@ char *parse_asm(struct Transpiler *transpiler, int i){
 
 
 char *parse_expr_asm(struct Transpiler *transpiler, int i){
+	if(strcmp(arr_get(transpiler->arr, i).data, "(") == 0){
+		return transpile_expr(transpiler, i+1, arr_get(transpiler->arr, i+1).data);
+	}
 	if (strcmp(arr_get(transpiler->arr, i+1).data, "=") == 0 && strcmp(arr_get(transpiler->arr, i+2).data, "=") == 0 && alreadyWentThrough == false){
 			alreadyWentThrough = true;
 			char *a = parse_expr_asm(transpiler, i);
@@ -1058,21 +1073,34 @@ char *parse_expr_asm(struct Transpiler *transpiler, int i){
 			return sres;
 		};
 	};
-	return arr_get(transpiler->arr, i).data;
+	for (int i=0; i<transpiler->normalCompiler.tabs; i++){
+		strcat(transpiler->normalCompiler.code, "\t");
+	};
+	strcat(transpiler->normalCompiler.code, "mov r15, ");
+	strcat(transpiler->normalCompiler.code, arr_get(transpiler->arr, i).data);
+	strcat(transpiler->normalCompiler.code, "\n");
+	return "r15";
 };
 
 char rax[500];
+bool inIfStatement = false;
+unsigned int scope = 0;
 
-void transpile(struct Transpiler *transpiler, int i){
+void transpile(struct Transpiler *transpiler, int *ip){
+	int i = *ip;
 	if (transpiler->status == Simulate) {
 		if (strcmp(arr_get(transpiler->arr, i+1).data, ":") == 0){
 			arr_push(transpiler->simulation.constants,  arr_get(transpiler->arr, i).data);
 			arr_push(transpiler->simulation.constants,  arr_get(transpiler->arr, i+2).data);
-		} else if (strcmp(arr_get(transpiler->arr, i+1).data, "{") == 0){
+		} else if (strcmp(arr_get(transpiler->arr, i+1).data, "{") == 0 && inIfStatement == false){
 			current_function = arr_get(transpiler->arr, i).data;
 		} 
 		if (strcmp(arr_get(transpiler->arr, i).data, "}") == 0){
-			current_function = "<global scope>";
+			if (inIfStatement == true){
+				inIfStatement = false;
+			}else {
+				current_function = "<global scope>";
+			}
 		};
 		if (strcmp(current_function, "main")==0 || (current_function[0] == '<'&&current_function[1] == 'm'&&current_function[2] == '>')) {
 			if (strcmp(arr_get(transpiler->arr, i+1).data, "=") == 0 && strcmp(arr_get(transpiler->arr, i+2).data, "=") && strcmp(arr_get(transpiler->arr, i).data, "=")){
@@ -1100,6 +1128,21 @@ void transpile(struct Transpiler *transpiler, int i){
 					};
 					strcpy(s.bytes, transpile_expr(transpiler, i+2, arr_get(transpiler->arr, i+2).data));
 					arr_push(transpiler->simulation.variables, s);
+				};
+			}else if(strcmp(arr_get(transpiler->arr, i).data, "if") == 0){
+				alreadyWentThrough = false;
+				inIfStatement = true;
+				char *a = transpile_expr(transpiler, i+1, arr_get(transpiler->arr, i+1).data);
+				if (strcmp(a, "0") == 0){
+					unsigned int orgScope = scope;
+					int k = i;
+					for (; k < arr_size(transpiler->arr); k++){
+						if (strcmp(arr_get(transpiler->arr, k).data, "{") == 0){scope++;}
+						else if (strcmp(arr_get(transpiler->arr, k).data, "}") == 0){scope--;if(scope == 0){break;}};
+					};
+					scope = orgScope + 1;
+					*ip = k;
+					i = *ip;
 				};
 			}else if (strcmp(arr_get(transpiler->arr, i).data, "inc") == 0){
 				char *val = arr_get(transpiler->arr, i+1).data;
@@ -1231,7 +1274,7 @@ void transpile(struct Transpiler *transpiler, int i){
 					if (strcmp(arr_get(transpiler->arr, j).data, arr_get(transpiler->arr, i+1).data) == 0 && strcmp(arr_get(transpiler->arr, j+2).data, "{") == 0){
 						j+=3;
 						while (strcmp(arr_get(transpiler->arr, j).data, "}")){
-							transpile(transpiler, j);
+							transpile(transpiler, &j);
 							j++;
 						}
 					};
@@ -1254,7 +1297,7 @@ void transpile(struct Transpiler *transpiler, int i){
 					if (strcmp(arr_get(transpiler->arr, j).data, arr_get(transpiler->arr, i+1).data) == 0 && strcmp(arr_get(transpiler->arr, j+1).data, "{") == 0){
 						j++;
 						while (strcmp(arr_get(transpiler->arr, j).data, "}")){
-							transpile(transpiler, j);
+							transpile(transpiler, &j);
 							j++;
 						}
 					};
@@ -1267,17 +1310,26 @@ void transpile(struct Transpiler *transpiler, int i){
 			transpiler->personalByteCode.constant_pool[transpiler->personalByteCode.constant_pool_count++] = transpile_expr_byte(transpiler, i);
 			strcpy(constant_names[constant_names_count++], arr_get(transpiler->arr, i-2).data);
 			i++;
-		}else if (strcmp(arr_get(transpiler->arr, i+1).data, "{") == 0){
+		}else if (strcmp(arr_get(transpiler->arr, i+1).data, "{") == 0 && inIfStatement == false){
 			current_function = arr_get(transpiler->arr, i).data;
 			if (strcmp(current_function, "") == 0){
 				current_function = arr_get(transpiler->arr, i-1).data;
 			};
 		} else if (strcmp(arr_get(transpiler->arr, i).data, "}") == 0){
-			transpiler->personalByteCode.method_pool[transpiler->personalByteCode.methods_count].type = CONSTANT_METHOD;
-			int byteslen = sizeof(transpiler->personalByteCode.method_pool[transpiler->personalByteCode.methods_count].bytes);
-			memcpy(transpiler->personalByteCode.method_pool[transpiler->personalByteCode.methods_count].bytes, current_function, byteslen);
-			transpiler->personalByteCode.methods_count++;
-			current_function = "<global scope>";
+			if (inIfStatement == true){
+				
+				transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].type = INST_IFEND;
+				transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].col = arr_get(transpiler->arr, i).col;
+				transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].row = arr_get(transpiler->arr, i).row;
+				transpiler->personalByteCode.instruction_count++;
+				inIfStatement = false;
+			}else {
+				transpiler->personalByteCode.method_pool[transpiler->personalByteCode.methods_count].type = CONSTANT_METHOD;
+				int byteslen = sizeof(transpiler->personalByteCode.method_pool[transpiler->personalByteCode.methods_count].bytes);
+				memcpy(transpiler->personalByteCode.method_pool[transpiler->personalByteCode.methods_count].bytes, current_function, byteslen);
+				transpiler->personalByteCode.methods_count++;
+				current_function = "<global scope>";
+			}
 		}else if(strcmp(arr_get(transpiler->arr, i).data, "syscall") == 0){
 			int byteslen = sizeof(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].method);
 			memcpy(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].method, current_function, byteslen);
@@ -1285,7 +1337,16 @@ void transpile(struct Transpiler *transpiler, int i){
 			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].col = arr_get(transpiler->arr, i).col;
 			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].row = arr_get(transpiler->arr, i).row;
 			transpiler->personalByteCode.instruction_count++;
-		}else if(strcmp(arr_get(transpiler->arr, i+1).data, "=") == 0 && strcmp(arr_get(transpiler->arr, i+2).data, "=") && strcmp(arr_get(transpiler->arr, i).data, "=")){
+		}else if(strcmp(arr_get(transpiler->arr, i).data, "if") == 0){
+			inIfStatement = true;
+			int byteslen = sizeof(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].method);
+			memcpy(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].method, current_function, byteslen);
+			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].type = INST_IF;
+			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].operand2 = transpile_expr_byte(transpiler, i+1);
+			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].col = arr_get(transpiler->arr, i).col;
+			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].row = arr_get(transpiler->arr, i).row;
+			transpiler->personalByteCode.instruction_count++;
+		}else if((strcmp(arr_get(transpiler->arr, i+1).data, "=") == 0 && strcmp(arr_get(transpiler->arr, i+2).data, "=")) && strcmp(arr_get(transpiler->arr, i).data, ">") && strcmp(arr_get(transpiler->arr, i).data, "<") && strcmp(arr_get(transpiler->arr, i+2).data, "=") && strcmp(arr_get(transpiler->arr, i).data, "=")){
 
 			char *val = arr_get(transpiler->arr, i).data;
 			if (strcmp(arr_get(transpiler->arr, i).data, "") == 0){
@@ -1417,7 +1478,7 @@ void transpile(struct Transpiler *transpiler, int i){
 
 			
 			strcat(transpiler->normalCompiler.dataSection, "\n");
-		}else if(strcmp(arr_get(transpiler->arr, i+1).data, "{") == 0){
+		}else if(strcmp(arr_get(transpiler->arr, i+1).data, "{") == 0 && inIfStatement == false){
 			char *wdata = arr_get(transpiler->arr, i).data;
 			if (strcmp(wdata, "") == 0){
 				wdata = arr_get(transpiler->arr, i-1).data;
@@ -1437,21 +1498,31 @@ void transpile(struct Transpiler *transpiler, int i){
 			};
 			i++;
 		}else if(strcmp(arr_get(transpiler->arr, i).data, "}") == 0){
-
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
-			if (strcmp(current_function, "main")) {
-				strcat(transpiler->normalCompiler.code, "ret\n");
+			if (inIfStatement == true && scope == 1){
+				for (int i=0; i<transpiler->normalCompiler.tabs; i++){
+					strcat(transpiler->normalCompiler.code, "\t");
+				};
+				char kstr[50];sprintf(kstr, "%d", i);
+				strcat(transpiler->normalCompiler.code, "jmp end_");
+				strcat(transpiler->normalCompiler.code, kstr);
+				strcat(transpiler->normalCompiler.code, "\n");
+				strcat(transpiler->normalCompiler.code, "end_");
+				strcat(transpiler->normalCompiler.code, kstr);
+				strcat(transpiler->normalCompiler.code, ":\n");
+				inIfStatement = false;
 			}else {
-				strcat(transpiler->normalCompiler.code, "mov rax, 0x02000001\n\tmov       rdi, 0\n\tsyscall\n\tret");
+				for (int i=0; i<transpiler->normalCompiler.tabs; i++){
+					strcat(transpiler->normalCompiler.code, "\t");
+				};
+				if (strcmp(current_function, "main")) {
+					strcat(transpiler->normalCompiler.code, "ret\n");
+				}else {
+					strcat(transpiler->normalCompiler.code, "mov rax, 0x02000001\n\tmov       rdi, 0\n\tsyscall\n\tret");
+				}
+				transpiler->normalCompiler.tabs--;
 			}
-	   		transpiler->normalCompiler.tabs--;
 		}else if((strcmp(arr_get(transpiler->arr, i+1).data, "=") == 0 && strcmp(arr_get(transpiler->arr, i+2).data, "=")) && strcmp(arr_get(transpiler->arr, i+2).data, "=") && strcmp(arr_get(transpiler->arr, i).data, "=")){
 			// fprintf(stderr, "{%s, %s, %s}", arr_get(transpiler->arr, i).data, arr_get(transpiler->arr, i+1).data, arr_get(transpiler->arr, i+2).data);
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
 			if (strcmp(arr_get(transpiler->arr, i).data, "=") == 0 && strcmp(arr_get(transpiler->arr, i+1).data, "=")){i++;};
 				char *val = arr_get(transpiler->arr, i).data;
 			if (strcmp(arr_get(transpiler->arr, i-1).data, "i16") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "i32") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "i64") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "int") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "byte") == 0){
@@ -1502,6 +1573,9 @@ void transpile(struct Transpiler *transpiler, int i){
 					res += arr_get(transpiler->normalCompiler.constants, i).size;
 				};
 				if (found == 1) {
+					for (int i=0; i<transpiler->normalCompiler.tabs; i++){
+						strcat(transpiler->normalCompiler.code, "\t");
+					};
 					int res = 0;
 					for (int i=0; i<=transpiler->normalCompiler.constants->len-1; i++){
 						res += arr_get(transpiler->normalCompiler.constants, i).size;
@@ -1539,6 +1613,9 @@ void transpile(struct Transpiler *transpiler, int i){
 							transpiler->normalCompiler.stack_size++;
 						}else {
 							char *a = parse_expr_asm(transpiler, i);
+							for (int i=0; i<transpiler->normalCompiler.tabs; i++){
+								strcat(transpiler->normalCompiler.code, "\t");
+							};
 							strcat(transpiler->normalCompiler.code, "mov ");
 							strcat(transpiler->normalCompiler.code, a);
 							strcat(transpiler->normalCompiler.code, ", ");
@@ -1616,6 +1693,11 @@ void transpile(struct Transpiler *transpiler, int i){
 			};
 			strcat(transpiler->normalCompiler.code, a);
 			strcat(transpiler->normalCompiler.code, "\n");
+			strcat(transpiler->normalCompiler.code, "mov ");
+			strcat(transpiler->normalCompiler.code, arr_get(transpiler->arr, i+1).data);
+			strcat(transpiler->normalCompiler.code, ", ");
+			strcat(transpiler->normalCompiler.code, a);
+			strcat(transpiler->normalCompiler.code, "\n");
 		}else if(strcmp(arr_get(transpiler->arr, i).data, "dec") == 0){
 			char *a = parse_expr_asm(transpiler, i+1);
 			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
@@ -1661,6 +1743,31 @@ void transpile(struct Transpiler *transpiler, int i){
 			strcat(transpiler->normalCompiler.code, ", ");
 			strcat(transpiler->normalCompiler.code, arr_get(transpiler->arr, i+2).data);
 			strcat(transpiler->normalCompiler.code, "\n");
+		}else if(strcmp(arr_get(transpiler->arr, i).data, "if") == 0){
+			char *a = parse_expr_asm(transpiler, i+1);
+			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
+				strcat(transpiler->normalCompiler.code, "\t");
+			};
+			strcat(transpiler->normalCompiler.code, "test ");
+			strcat(transpiler->normalCompiler.code, a);
+			strcat(transpiler->normalCompiler.code, ", ");
+			strcat(transpiler->normalCompiler.code, a);
+			strcat(transpiler->normalCompiler.code, "\n");
+			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
+				strcat(transpiler->normalCompiler.code, "\t");
+			};
+			inIfStatement = true;
+			unsigned int orgScope = scope;
+			int k = i;
+			for (; k < arr_size(transpiler->arr); k++){
+				if (strcmp(arr_get(transpiler->arr, k).data, "{") == 0){scope++;}
+				else if (strcmp(arr_get(transpiler->arr, k).data, "}") == 0){scope--;if(scope == 0){break;}};
+			};
+			scope = orgScope + 1;
+			strcat(transpiler->normalCompiler.code, "jz end_");
+			char kstr[50];sprintf(kstr, "%d", k);
+			strcat(transpiler->normalCompiler.code, kstr);
+			strcat(transpiler->normalCompiler.code, "\n");
 		}
 	};
 };
@@ -1696,7 +1803,7 @@ void run_transpiler(struct Transpiler *transpiler){
 		arr_push(transpiler->simulation.registers, "r13");
 		transpiler->simulation.variablelength = 0;
 		for (int i=0; i<=transpiler->arr->len; i++){
-			transpile(transpiler, i);
+			transpile(transpiler, &i);
 		};
 	}else if(transpiler->status == PersonalByteCode) {
        FILE *f  = fopen(transpiler->output_file, "wb");
@@ -1713,7 +1820,7 @@ void run_transpiler(struct Transpiler *transpiler){
 	   transpiler->personalByteCode.methods_count = 0;
 	   transpiler->personalByteCode.instruction_count = 0;
 		for (int i=0; i<=transpiler->arr->len; i++){
-			transpile(transpiler, i);
+			transpile(transpiler, &i);
 		};
 		fwrite(&transpiler->personalByteCode.constant_pool_count, sizeof(unsigned int), 1, f);
 		fwrite(&transpiler->personalByteCode.constant_pool, sizeof(struct Constant), transpiler->personalByteCode.constant_pool_count, f);
@@ -1784,7 +1891,7 @@ void run_transpiler(struct Transpiler *transpiler){
 
 
 		for (int i=0; i<=transpiler->arr->len; i++){
-			transpile(transpiler, i);
+			transpile(transpiler, &i);
 		};
 
 		str = "section .data\n";

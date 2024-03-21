@@ -1,6 +1,8 @@
 main {
-    int x = 5;
+    rdi = 57;
     rax = 60; // Exit syscall
-    rdi = x < 9;
+    if 5 <= 5 {
+        inc rdi
+    };
     syscall;
 }
