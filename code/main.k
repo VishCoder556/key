@@ -1,10 +1,10 @@
-msg:"Hello World.\n"
-msglen:$msg
+include "stdio.k"
+
+msg: "Hello World\n"
+msglen: $msg
 
 main {
-    rax = 1 // Write syscall
-    rdi = 1 // Stdout
-    rsi = msg // message
-    rdx = msglen // Message length
-    syscall
+    rsi = msg
+    rdx = msglen
+    call print
 }

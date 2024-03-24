@@ -469,7 +469,6 @@ new_arrtype(constant);
 struct AssemblyTranspiler {
 	char dataSection[1000];
 	char code[9000];
-	int tabs;
 	int stack_size;
 	arr_variable *variables;
 	arr_constant *constants;
@@ -522,6 +521,7 @@ if (strcmp(arr->value[arr->len-1].data, "") == 0){strcpy(arr->value[arr->len-1].
 					strcpy(arr->value[arr->len++].data, ""); \
 		} \
 	mode = 3;
+
 	
 #define other() 	char *res = malloc(135); \
 				strncpy(res, arr_get(arr, arr_size(arr)-1).data, 135); \
@@ -537,7 +537,19 @@ if (strcmp(arr->value[arr->len-1].data, "") == 0){strcpy(arr->value[arr->len-1].
 				} \
 				w[1] = '\0'; \
 				if(data[i-1]=='\\'&&isalpha(data[i])){} else{ strcat(res, w); } \
-				strncpy(arr->value[arr_size(arr)-1].data, res, 135);
+				if (strcmp(res, "include") == 0){ \
+					char *str = strdup(data) + i + 3;\
+					strtok(str, "\""); \
+					FILE *file = fopen(str, "r");\
+					char data1[500];\
+					fread(data1, 1, 500, file);\
+					arr_String *newarr = arr_new(String);\
+					split(newarr, data1);\
+					for (int t=0; t<=newarr->len; t++){;arr_push(arr, arr_get(newarr, t));}\
+					fclose(file);\
+					i++;\
+				}; \
+				strncpy(arr->value[arr_size(arr)-1].data, res, 135); 
 
 
 void split(arr_String *arr, char data[300]){
@@ -760,9 +772,7 @@ struct Constant transpile_expr_byte(struct Transpiler *transpiler, int i){
 		alreadyWentThrough = false;
 		return con;
 	}else if (arr_get(transpiler->arr, i).data[0] == '$'){
-		for (int y=0; y<=strlen(transpiler->arr->value[y].data); y++){
-			arr_get(transpiler->arr, i).data[y] = arr_get(transpiler->arr, i).data[y+1];
-		};
+		strcpy(arr_get(transpiler->arr, i).data, strdup(arr_get(transpiler->arr, i).data)+1);
 		con.type = CONSTANT_LEN;
 		memcpy(con.bytes, arr_get(transpiler->arr, i).data, sizeof(con.bytes));
 	}else if(arr_get(transpiler->arr, i).data[0] == '"'){
@@ -889,156 +899,171 @@ char *parse_asm(struct Transpiler *transpiler, int i){
 	return res;
 };
 
+char rax[500];
+bool inIfStatement = false;
+unsigned int scope = 0;
+
 
 char *parse_expr_asm(struct Transpiler *transpiler, int i){
+	if(isalpha(arr_get(transpiler->arr, i).data[0])){return arr_get(transpiler->arr, i).data;};
 	if(strcmp(arr_get(transpiler->arr, i).data, "(") == 0){
 		return transpile_expr(transpiler, i+1, arr_get(transpiler->arr, i+1).data);
 	}
 	if (strcmp(arr_get(transpiler->arr, i+1).data, "=") == 0 && strcmp(arr_get(transpiler->arr, i+2).data, "=") == 0 && alreadyWentThrough == false){
 			alreadyWentThrough = true;
 			char *a = parse_expr_asm(transpiler, i);
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
+				
 			strcat(transpiler->normalCompiler.code, "mov r15, ");
 			strcat(transpiler->normalCompiler.code, a);
-			strcat(transpiler->normalCompiler.code, "\n");
+			strcat(transpiler->normalCompiler.code, "\n\t");
 			a = parse_expr_asm(transpiler, i+3);
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
+				
 			strcat(transpiler->normalCompiler.code, "mov r14, ");
 			strcat(transpiler->normalCompiler.code, a);
-			strcat(transpiler->normalCompiler.code, "\n");
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
-			strcat(transpiler->normalCompiler.code, "cmp r14, r15\n");
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
-			strcat(transpiler->normalCompiler.code, "sete    al\n\tmovzx r15, al\n");
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
-			strcat(transpiler->normalCompiler.code, "mov r14, __w\n");
-			return "r15";
+			strcat(transpiler->normalCompiler.code, "\n\t");
+				
+			strcat(transpiler->normalCompiler.code, "cmp r14, r15\n\t");
+				
+			if (!inIfStatement) {
+			strcat(transpiler->normalCompiler.code, "sete    al\n\tmovzx r13, al\n\t");
+			}else {
+				unsigned int __scope = 0;
+				int k = i;
+				for (; k < arr_size(transpiler->arr)-1; k++){
+					if (strcmp(arr_get(transpiler->arr, k).data, "{") == 0){__scope++;}
+					else if (strcmp(arr_get(transpiler->arr, k).data, "}") == 0){__scope--;if(__scope == 0){break;}};
+				};
+				char res1[100];sprintf(res1, "%d", k);
+				strcat(transpiler->normalCompiler.code, "jnz end_");
+				strcat(transpiler->normalCompiler.code, res1);
+				strcat(transpiler->normalCompiler.code, "\n\t");
+			}
+			strcat(transpiler->normalCompiler.code, "mov r14, __w\n\t");
+			return "r13";
 	}else if (strcmp(arr_get(transpiler->arr, i+1).data, ">") == 0 && strcmp(arr_get(transpiler->arr, i+2).data, "=") == 0 && alreadyWentThrough == false){
 			alreadyWentThrough = true;
 			char *a = parse_expr_asm(transpiler, i);
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
+				
 			strcat(transpiler->normalCompiler.code, "mov r15, ");
 			strcat(transpiler->normalCompiler.code, a);
-			strcat(transpiler->normalCompiler.code, "\n");
+			strcat(transpiler->normalCompiler.code, "\n\t");
 			a = parse_expr_asm(transpiler, i+3);
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
+				
 			strcat(transpiler->normalCompiler.code, "mov r14, ");
 			strcat(transpiler->normalCompiler.code, a);
-			strcat(transpiler->normalCompiler.code, "\n");
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
-			strcat(transpiler->normalCompiler.code, "cmp r14, r15\n");
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
-			strcat(transpiler->normalCompiler.code, "setle    al\n\tmovzx r15, al\n");
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
-			strcat(transpiler->normalCompiler.code, "mov r14, __w\n");
-			return "r15";
+			strcat(transpiler->normalCompiler.code, "\n\t");
+				
+			strcat(transpiler->normalCompiler.code, "cmp r14, r15\n\t");
+				
+			if (!inIfStatement) {
+			strcat(transpiler->normalCompiler.code, "setge    al\n\tmovzx r13, al\n\t");
+			}else {
+				unsigned int __scope = 0;
+				int k = i;
+				for (; k < arr_size(transpiler->arr)-1; k++){
+					if (strcmp(arr_get(transpiler->arr, k).data, "{") == 0){__scope++;}
+					else if (strcmp(arr_get(transpiler->arr, k).data, "}") == 0){__scope--;if(__scope == 0){break;}};
+				};
+				char res1[100];sprintf(res1, "%d", k);
+				strcat(transpiler->normalCompiler.code, "jl end_");
+				strcat(transpiler->normalCompiler.code, res1);
+				strcat(transpiler->normalCompiler.code, "\n\t");
+			}
+			strcat(transpiler->normalCompiler.code, "mov r14, __w\n\t");
+			return "r13";
 	}else if (strcmp(arr_get(transpiler->arr, i+1).data, "<") == 0 && strcmp(arr_get(transpiler->arr, i+2).data, "=") == 0 && alreadyWentThrough == false){
 			alreadyWentThrough = true;
 			char *a = parse_expr_asm(transpiler, i);
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
+				
 			strcat(transpiler->normalCompiler.code, "mov r15, ");
 			strcat(transpiler->normalCompiler.code, a);
-			strcat(transpiler->normalCompiler.code, "\n");
+			strcat(transpiler->normalCompiler.code, "\n\t");
 			a = parse_expr_asm(transpiler, i+3);
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
+				
 			strcat(transpiler->normalCompiler.code, "mov r14, ");
 			strcat(transpiler->normalCompiler.code, a);
-			strcat(transpiler->normalCompiler.code, "\n");
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
-			strcat(transpiler->normalCompiler.code, "cmp r14, r15\n");
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
-			strcat(transpiler->normalCompiler.code, "setge    al\n\tmovzx r15, al\n");
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
-			strcat(transpiler->normalCompiler.code, "mov r14, __w\n");
-			return "r15";
+			strcat(transpiler->normalCompiler.code, "\n\t");
+				
+			strcat(transpiler->normalCompiler.code, "cmp r14, r15\n\t");
+				
+			if (!inIfStatement) {
+			strcat(transpiler->normalCompiler.code, "setle    al\n\tmovzx r13, al\n\t");
+			}else {
+				unsigned int __scope = 0;
+				int k = i;
+				for (; k < arr_size(transpiler->arr)-1; k++){
+					if (strcmp(arr_get(transpiler->arr, k).data, "{") == 0){__scope++;}
+					else if (strcmp(arr_get(transpiler->arr, k).data, "}") == 0){__scope--;if(__scope == 0){break;}};
+				};
+				char res1[100];sprintf(res1, "%d", k);
+				strcat(transpiler->normalCompiler.code, "jg end_");
+				strcat(transpiler->normalCompiler.code, res1);
+				strcat(transpiler->normalCompiler.code, "\n\t");
+			}
+			strcat(transpiler->normalCompiler.code, "mov r14, __w\n\t");
+			return "r13";
 	}else if (strcmp(arr_get(transpiler->arr, i+1).data, ">") == 0 && alreadyWentThrough == false){
 			alreadyWentThrough = true;
 			char *a = parse_expr_asm(transpiler, i);
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
+				
 			strcat(transpiler->normalCompiler.code, "mov r15, ");
 			strcat(transpiler->normalCompiler.code, a);
-			strcat(transpiler->normalCompiler.code, "\n");
-			a = parse_expr_asm(transpiler, i+2);
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
+			strcat(transpiler->normalCompiler.code, "\n\t");
+			a = parse_expr_asm(transpiler, i+3);
+				
 			strcat(transpiler->normalCompiler.code, "mov r14, ");
 			strcat(transpiler->normalCompiler.code, a);
-			strcat(transpiler->normalCompiler.code, "\n");
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
-			strcat(transpiler->normalCompiler.code, "cmp r14, r15\n");
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
-			strcat(transpiler->normalCompiler.code, "setl    al\n\tmovzx r15, al\n");
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
-			strcat(transpiler->normalCompiler.code, "mov r14, __w\n");
-			return "r15";
+			strcat(transpiler->normalCompiler.code, "\n\t");
+				
+			strcat(transpiler->normalCompiler.code, "cmp r14, r15\n\t");
+				
+			if (!inIfStatement) {
+			strcat(transpiler->normalCompiler.code, "setle    al\n\tmovzx r13, al\n\t");
+			}else {
+				unsigned int __scope = 0;
+				int k = i;
+				for (; k < arr_size(transpiler->arr)-1; k++){
+					if (strcmp(arr_get(transpiler->arr, k).data, "{") == 0){__scope++;}
+					else if (strcmp(arr_get(transpiler->arr, k).data, "}") == 0){__scope--;if(__scope == 0){break;}};
+				};
+				char res1[100];sprintf(res1, "%d", k);
+				strcat(transpiler->normalCompiler.code, "jg end_");
+				strcat(transpiler->normalCompiler.code, res1);
+				strcat(transpiler->normalCompiler.code, "\n\t");
+			}
+			strcat(transpiler->normalCompiler.code, "mov r14, __w\n\t");
+			return "r13";
 	}else if (strcmp(arr_get(transpiler->arr, i+1).data, "<") == 0 && alreadyWentThrough == false){
 			alreadyWentThrough = true;
 			char *a = parse_expr_asm(transpiler, i);
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
+				
 			strcat(transpiler->normalCompiler.code, "mov r15, ");
 			strcat(transpiler->normalCompiler.code, a);
-			strcat(transpiler->normalCompiler.code, "\n");
+			strcat(transpiler->normalCompiler.code, "\n\t");
 			a = parse_expr_asm(transpiler, i+2);
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
+				
 			strcat(transpiler->normalCompiler.code, "mov r14, ");
 			strcat(transpiler->normalCompiler.code, a);
-			strcat(transpiler->normalCompiler.code, "\n");
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
-			strcat(transpiler->normalCompiler.code, "cmp r14, r15\n");
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
-			strcat(transpiler->normalCompiler.code, "setg    al\n\tmovzx r15, al\n");
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
-			strcat(transpiler->normalCompiler.code, "mov r14, __w\n");
-			return "r15";
+			strcat(transpiler->normalCompiler.code, "\n\t");
+				
+			strcat(transpiler->normalCompiler.code, "cmp r14, r15\n\t");
+				
+			if (!inIfStatement) {
+			strcat(transpiler->normalCompiler.code, "setge    al\n\tmovzx r13, al\n\t");
+			}else {
+				unsigned int __scope = 0;
+				int k = i;
+				for (; k < arr_size(transpiler->arr)-1; k++){
+					if (strcmp(arr_get(transpiler->arr, k).data, "{") == 0){__scope++;}
+					else if (strcmp(arr_get(transpiler->arr, k).data, "}") == 0){__scope--;if(__scope == 0){break;}};
+				};
+				char res1[100];sprintf(res1, "%d", k);
+				strcat(transpiler->normalCompiler.code, "jl end_");
+				strcat(transpiler->normalCompiler.code, res1);
+				strcat(transpiler->normalCompiler.code, "\n\t");
+			}
+			strcat(transpiler->normalCompiler.code, "mov r14, __w\n\t");
+			return "r13";
 	};
 	for (int j=0; j<=transpiler->normalCompiler.stack_size-1; j++){
 		if (strcmp(arr_get(transpiler->arr, i).data, arr_get(transpiler->normalCompiler.variables, j).name) == 0){
@@ -1061,7 +1086,7 @@ char *parse_expr_asm(struct Transpiler *transpiler, int i){
 			char res[50];
 			sprintf(res, "%d", nres);
 			char sres[50];
-			if (strcmp(arr_get(transpiler->normalCompiler.constants, j).type, "byte") == 0) {
+			if (strcmp(arr_get(transpiler->arr, i-1).data, "byte") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "char") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "i8") == 0) {
 				strcpy(sres, "byte [r14 + ");
 			}else if (strcmp(arr_get(transpiler->normalCompiler.constants, j).type, "int") == 0) {
 				strcpy(sres, "qword [r14 + ");
@@ -1073,18 +1098,12 @@ char *parse_expr_asm(struct Transpiler *transpiler, int i){
 			return sres;
 		};
 	};
-	for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-		strcat(transpiler->normalCompiler.code, "\t");
-	};
-	strcat(transpiler->normalCompiler.code, "mov r15, ");
+	
+	strcat(transpiler->normalCompiler.code, "mov r13, ");
 	strcat(transpiler->normalCompiler.code, arr_get(transpiler->arr, i).data);
-	strcat(transpiler->normalCompiler.code, "\n");
-	return "r15";
+	strcat(transpiler->normalCompiler.code, "\n\t");
+	return "r13";
 };
-
-char rax[500];
-bool inIfStatement = false;
-unsigned int scope = 0;
 
 void transpile(struct Transpiler *transpiler, int *ip){
 	int i = *ip;
@@ -1262,7 +1281,7 @@ void transpile(struct Transpiler *transpiler, int *ip){
                 }
 					error(transpiler, err, "SyscallError", "syscall", i, global+2, "invalid syscall number was set here", "");
 				}
-			}else if(strcmp(arr_get(transpiler->arr, i).data, "jmp") == 0){
+			}else if(strcmp(arr_get(transpiler->arr, i).data, "jmp") == 0 || strcmp(arr_get(transpiler->arr, i).data, "call") == 0){
 				char crf[50];
 				strcpy(crf, "<m>");
 				strcat(crf, arr_get(transpiler->arr, i+1).data);
@@ -1271,8 +1290,8 @@ void transpile(struct Transpiler *transpiler, int *ip){
 					if (j == i){
 						j+=2;
 					};
-					if (strcmp(arr_get(transpiler->arr, j).data, arr_get(transpiler->arr, i+1).data) == 0 && strcmp(arr_get(transpiler->arr, j+2).data, "{") == 0){
-						j+=3;
+					if (strcmp(arr_get(transpiler->arr, j).data, arr_get(transpiler->arr, i+1).data) == 0 && strcmp(arr_get(transpiler->arr, j+1).data, "{") == 0){
+						j+=2;
 						while (strcmp(arr_get(transpiler->arr, j).data, "}")){
 							transpile(transpiler, &j);
 							j++;
@@ -1431,7 +1450,7 @@ void transpile(struct Transpiler *transpiler, int *ip){
 			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].col = arr_get(transpiler->arr, i).col;
 			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].row = arr_get(transpiler->arr, i).row;
 			transpiler->personalByteCode.instruction_count++;
-		}else if(strcmp(arr_get(transpiler->arr, i).data, "jmp") == 0){
+		}else if(strcmp(arr_get(transpiler->arr, i).data, "jmp") == 0 || strcmp(arr_get(transpiler->arr, i).data, "call") == 0){
 			int byteslen = sizeof(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].method);
 			memcpy(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].method, current_function, byteslen);
 			
@@ -1488,44 +1507,37 @@ void transpile(struct Transpiler *transpiler, int *ip){
 				strcpy(wdata, "start");
 			};
 			strcat(transpiler->normalCompiler.code, wdata);
-			strcat(transpiler->normalCompiler.code, ":\n");
-			for (int i=0; i<=transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
-	   		transpiler->normalCompiler.tabs++;
+			strcat(transpiler->normalCompiler.code, ":\n\t");
+				
 			if (strcmp(wdata, "start") == 0){
-				strcat(transpiler->normalCompiler.code, "mov r14, __w\n");
+				strcat(transpiler->normalCompiler.code, "mov r14, __w\n\t");
 			};
 			i++;
 		}else if(strcmp(arr_get(transpiler->arr, i).data, "}") == 0){
 			if (inIfStatement == true && scope == 1){
-				for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-					strcat(transpiler->normalCompiler.code, "\t");
-				};
+					
 				char kstr[50];sprintf(kstr, "%d", i);
 				strcat(transpiler->normalCompiler.code, "jmp end_");
 				strcat(transpiler->normalCompiler.code, kstr);
 				strcat(transpiler->normalCompiler.code, "\n");
 				strcat(transpiler->normalCompiler.code, "end_");
 				strcat(transpiler->normalCompiler.code, kstr);
-				strcat(transpiler->normalCompiler.code, ":\n");
+				strcat(transpiler->normalCompiler.code, ":\n\t");
 				inIfStatement = false;
 			}else {
-				for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-					strcat(transpiler->normalCompiler.code, "\t");
-				};
-				if (strcmp(current_function, "main")) {
+					
+				if (strcmp(current_function, "start")) {
 					strcat(transpiler->normalCompiler.code, "ret\n");
 				}else {
 					strcat(transpiler->normalCompiler.code, "mov rax, 0x02000001\n\tmov       rdi, 0\n\tsyscall\n\tret");
 				}
-				transpiler->normalCompiler.tabs--;
 			}
 		}else if((strcmp(arr_get(transpiler->arr, i+1).data, "=") == 0 && strcmp(arr_get(transpiler->arr, i+2).data, "=")) && strcmp(arr_get(transpiler->arr, i+2).data, "=") && strcmp(arr_get(transpiler->arr, i).data, "=")){
 			// fprintf(stderr, "{%s, %s, %s}", arr_get(transpiler->arr, i).data, arr_get(transpiler->arr, i+1).data, arr_get(transpiler->arr, i+2).data);
+			
 			if (strcmp(arr_get(transpiler->arr, i).data, "=") == 0 && strcmp(arr_get(transpiler->arr, i+1).data, "=")){i++;};
 				char *val = arr_get(transpiler->arr, i).data;
-			if (strcmp(arr_get(transpiler->arr, i-1).data, "i16") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "i32") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "i64") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "int") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "byte") == 0){
+			if (strcmp(arr_get(transpiler->arr, i-1).data, "i16") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "i32") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "i64") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "int") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "byte") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "char") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "i8") == 0){
 				strcat(transpiler->normalCompiler.dataSection, "\t");
 				strcat(transpiler->normalCompiler.dataSection, val);
 				strcat(transpiler->normalCompiler.dataSection, ": ");
@@ -1533,7 +1545,7 @@ void transpile(struct Transpiler *transpiler, int *ip){
 			if (strcmp(arr_get(transpiler->arr, i-1).data, "i16") == 0){
 				strcat(transpiler->normalCompiler.dataSection, "dw ");
 				strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, i+2));
-				strcat(transpiler->normalCompiler.dataSection, "\n");
+				strcat(transpiler->normalCompiler.dataSection, "\n\t");
 
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].size = 2;
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].type = arr_get(transpiler->arr, i-1).data;
@@ -1541,7 +1553,7 @@ void transpile(struct Transpiler *transpiler, int *ip){
 			}else if (strcmp(arr_get(transpiler->arr, i-1).data, "i32") == 0){
 				strcat(transpiler->normalCompiler.dataSection, "dd ");
 				strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, i+2));
-				strcat(transpiler->normalCompiler.dataSection, "\n");
+				strcat(transpiler->normalCompiler.dataSection, "\n\t");
 
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].size = 4;
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].type = arr_get(transpiler->arr, i-1).data;
@@ -1549,15 +1561,15 @@ void transpile(struct Transpiler *transpiler, int *ip){
 			}else if (strcmp(arr_get(transpiler->arr, i-1).data, "i64") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "int") == 0){
 				strcat(transpiler->normalCompiler.dataSection, "dq ");
 				strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, i+2));
-				strcat(transpiler->normalCompiler.dataSection, "\n");
+				strcat(transpiler->normalCompiler.dataSection, "\n\t");
 
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].size = 8;
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].type = arr_get(transpiler->arr, i-1).data;
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len++].name = arr_get(transpiler->arr, i).data;
-			}else if (strcmp(arr_get(transpiler->arr, i-1).data, "byte") == 0){
+			}else if (strcmp(arr_get(transpiler->arr, i-1).data, "byte") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "char") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "i8") == 0){
 				strcat(transpiler->normalCompiler.dataSection, "db ");
 				strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, i+2));
-				strcat(transpiler->normalCompiler.dataSection, "\n");
+				strcat(transpiler->normalCompiler.dataSection, "\n\t");
 
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].size = 1;
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].type = arr_get(transpiler->arr, i-1).data;
@@ -1573,9 +1585,7 @@ void transpile(struct Transpiler *transpiler, int *ip){
 					res += arr_get(transpiler->normalCompiler.constants, i).size;
 				};
 				if (found == 1) {
-					for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-						strcat(transpiler->normalCompiler.code, "\t");
-					};
+						
 					int res = 0;
 					for (int i=0; i<=transpiler->normalCompiler.constants->len-1; i++){
 						res += arr_get(transpiler->normalCompiler.constants, i).size;
@@ -1586,12 +1596,12 @@ void transpile(struct Transpiler *transpiler, int *ip){
 					strcat(transpiler->normalCompiler.code, rstr);
 					strcat(transpiler->normalCompiler.code, "], ");
 					strcat(transpiler->normalCompiler.code, arr_get(transpiler->arr, i+2).data);
-					strcat(transpiler->normalCompiler.code, "\n");
+					strcat(transpiler->normalCompiler.code, "\n\t");
 				}else {
 					if (strcmp(val, "rax") == 0){
 						strcpy(rax, parse_asm(transpiler, i+2));
 					};
-					if (strcmp(val, "rax") && strcmp(val, "rbx") && strcmp(val, "rcx") && strcmp(val, "rdx") && strcmp(val, "rsp") && strcmp(val, "rbp") && strcmp(val, "rsi") && strcmp(val, "rdi") && strcmp(val, "r10") && strcmp(val, "r11") && strcmp(val, "r12") && strcmp(val, "r13")){
+					if (strcmp(val, "rax") && strcmp(val, "rbx") && strcmp(val, "rcx") && strcmp(val, "rdx") && strcmp(val, "rsp") && strcmp(val, "rbp") && strcmp(val, "rsi") && strcmp(val, "rdi") && strcmp(val, "r10") && strcmp(val, "r11") && strcmp(val, "r12")){
 						int found = 0;
 						for (int j=0; j<=transpiler->normalCompiler.stack_size-1; j++){
 							if (strcmp(val, arr_get(transpiler->normalCompiler.variables, j).name) == 0){
@@ -1604,23 +1614,22 @@ void transpile(struct Transpiler *transpiler, int *ip){
 							};
 						};
 						if (found == 0) {
+								
 							strcat(transpiler->normalCompiler.code, "push ");
 							strcat(transpiler->normalCompiler.code, arr_get(transpiler->arr, i+2).data);
-							strcat(transpiler->normalCompiler.code, "\n");
+							strcat(transpiler->normalCompiler.code, "\n\t");
 							;
 							transpiler->normalCompiler.variables->value[transpiler->normalCompiler.variables->len].name = val;
 							transpiler->normalCompiler.variables->value[transpiler->normalCompiler.variables->len++].pos = transpiler->normalCompiler.stack_size;
 							transpiler->normalCompiler.stack_size++;
 						}else {
 							char *a = parse_expr_asm(transpiler, i);
-							for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-								strcat(transpiler->normalCompiler.code, "\t");
-							};
+								
 							strcat(transpiler->normalCompiler.code, "mov ");
 							strcat(transpiler->normalCompiler.code, a);
 							strcat(transpiler->normalCompiler.code, ", ");
 							strcat(transpiler->normalCompiler.code, arr_get(transpiler->arr, i+2).data);
-							strcat(transpiler->normalCompiler.code, "\n");
+							strcat(transpiler->normalCompiler.code, "\n\t");
 						}
 					}else {
 						char *a = parse_expr_asm(transpiler, i+2);
@@ -1630,61 +1639,54 @@ void transpile(struct Transpiler *transpiler, int *ip){
 								found = 1;
 							};
 						};
-						// if (found == 0) {
 							strcat(transpiler->normalCompiler.code, "mov ");
-						// }else {
-						// 	strcat(transpiler->normalCompiler.code, "movsx ");
-						// }
 						strcat(transpiler->normalCompiler.code, val);
 						strcat(transpiler->normalCompiler.code, ", ");
 						strcat(transpiler->normalCompiler.code, a);
-						strcat(transpiler->normalCompiler.code, "\n");
+						strcat(transpiler->normalCompiler.code, "\n\t");
 					}
 				}
 			}
 
 		}else if(strcmp(arr_get(transpiler->arr, i).data, "syscall") == 0){
 			if (strcmp(rax, "1") == 0){
-				for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-					strcat(transpiler->normalCompiler.code, "\t");
-				};
+					
 				strcat(transpiler->normalCompiler.code, "mov rax, 0x02000004");
-				strcat(transpiler->normalCompiler.code, "\n");
+				strcat(transpiler->normalCompiler.code, "\n\t");
 			}else if (strcmp(rax, "60") == 0){
-				for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-					strcat(transpiler->normalCompiler.code, "\t");
-				};
+					;
 				strcat(transpiler->normalCompiler.code, "mov rax, 0x02000001");
-				strcat(transpiler->normalCompiler.code, "\n");
+				strcat(transpiler->normalCompiler.code, "\n\t");
+			}else if (strcmp(rax, "2") == 0){
+					;
+				strcat(transpiler->normalCompiler.code, "mov rax, 0x2000005");
+				strcat(transpiler->normalCompiler.code, "\n\t");
+			}else if (strcmp(rax, "3") == 0){
+					;
+				strcat(transpiler->normalCompiler.code, "mov rax, 0x2000006");
+				strcat(transpiler->normalCompiler.code, "\n\t");
 			};
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
+				
 			strcat(transpiler->normalCompiler.code, "syscall");
-			strcat(transpiler->normalCompiler.code, "\n");
-		}else if(strcmp(arr_get(transpiler->arr, i).data, "jmp") == 0){
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
+			strcat(transpiler->normalCompiler.code, "\n\t");
+		}else if(strcmp(arr_get(transpiler->arr, i).data, "jmp") == 0 || strcmp(arr_get(transpiler->arr, i).data, "call") == 0){
+			if (strcmp(arr_get(transpiler->arr, i).data, "call") == 0) {
+			strcat(transpiler->normalCompiler.code, "call ");
+			}else {
 			strcat(transpiler->normalCompiler.code, "jmp ");
+			}
 			strcat(transpiler->normalCompiler.code, arr_get(transpiler->arr, i+1).data);
-			strcat(transpiler->normalCompiler.code, "\n");
+			strcat(transpiler->normalCompiler.code, "\n\t");
 		}else if(strcmp(arr_get(transpiler->arr, i).data, "jnz") == 0){
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
-			strcat(transpiler->normalCompiler.code, "test rax, rax\n");
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
+				
+			strcat(transpiler->normalCompiler.code, "test rax, rax\n\t");
+				
 			strcat(transpiler->normalCompiler.code, "jnz ");
 			strcat(transpiler->normalCompiler.code, arr_get(transpiler->arr, i+1).data);
-			strcat(transpiler->normalCompiler.code, "\n");
+			strcat(transpiler->normalCompiler.code, "\n\t");
 		}else if(strcmp(arr_get(transpiler->arr, i).data, "inc") == 0){
 			char *a = parse_expr_asm(transpiler, i+1);
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
+				
 			strcat(transpiler->normalCompiler.code, "inc ");
 			if (strcmp(arr_get(transpiler->arr, i+1).data, "rax") == 0){
 				char d[500];
@@ -1692,17 +1694,15 @@ void transpile(struct Transpiler *transpiler, int *ip){
 				strcpy(rax, d);
 			};
 			strcat(transpiler->normalCompiler.code, a);
-			strcat(transpiler->normalCompiler.code, "\n");
+			strcat(transpiler->normalCompiler.code, "\n\t");
 			strcat(transpiler->normalCompiler.code, "mov ");
 			strcat(transpiler->normalCompiler.code, arr_get(transpiler->arr, i+1).data);
 			strcat(transpiler->normalCompiler.code, ", ");
 			strcat(transpiler->normalCompiler.code, a);
-			strcat(transpiler->normalCompiler.code, "\n");
+			strcat(transpiler->normalCompiler.code, "\n\t");
 		}else if(strcmp(arr_get(transpiler->arr, i).data, "dec") == 0){
 			char *a = parse_expr_asm(transpiler, i+1);
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
+				
 			strcat(transpiler->normalCompiler.code, "dec ");
 			if (strcmp(arr_get(transpiler->arr, i+1).data, "rax") == 0){
 				char d[500];
@@ -1710,13 +1710,11 @@ void transpile(struct Transpiler *transpiler, int *ip){
 				strcpy(rax, d);
 			};
 			strcat(transpiler->normalCompiler.code, a);
-			strcat(transpiler->normalCompiler.code, "\n");
+			strcat(transpiler->normalCompiler.code, "\n\t");
 		}else if(strcmp(arr_get(transpiler->arr, i).data, "add") == 0){
 			char *a = arr_get(transpiler->arr, i+2).data;
 			char *b = parse_expr_asm(transpiler, i+1);
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
+				
 			strcat(transpiler->normalCompiler.code, "add ");
 			if (strcmp(arr_get(transpiler->arr, i+1).data, "rax") == 0){
 				char d[500];
@@ -1726,13 +1724,11 @@ void transpile(struct Transpiler *transpiler, int *ip){
 			strcat(transpiler->normalCompiler.code, b);
 			strcat(transpiler->normalCompiler.code, ", ");
 			strcat(transpiler->normalCompiler.code, arr_get(transpiler->arr, i+2).data);
-			strcat(transpiler->normalCompiler.code, "\n");
+			strcat(transpiler->normalCompiler.code, "\n\t");
 		}else if(strcmp(arr_get(transpiler->arr, i).data, "sub") == 0){
 			char *a = arr_get(transpiler->arr, i+2).data;
 			char *b = parse_expr_asm(transpiler, i+1);
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
+				
 			strcat(transpiler->normalCompiler.code, "sub ");
 			if (strcmp(arr_get(transpiler->arr, i+1).data, "rax") == 0){
 				char d[500];
@@ -1742,21 +1738,17 @@ void transpile(struct Transpiler *transpiler, int *ip){
 			strcat(transpiler->normalCompiler.code, b);
 			strcat(transpiler->normalCompiler.code, ", ");
 			strcat(transpiler->normalCompiler.code, arr_get(transpiler->arr, i+2).data);
-			strcat(transpiler->normalCompiler.code, "\n");
+			strcat(transpiler->normalCompiler.code, "\n\t");
 		}else if(strcmp(arr_get(transpiler->arr, i).data, "if") == 0){
+			inIfStatement = true;
 			char *a = parse_expr_asm(transpiler, i+1);
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
+				
 			strcat(transpiler->normalCompiler.code, "test ");
 			strcat(transpiler->normalCompiler.code, a);
 			strcat(transpiler->normalCompiler.code, ", ");
 			strcat(transpiler->normalCompiler.code, a);
-			strcat(transpiler->normalCompiler.code, "\n");
-			for (int i=0; i<transpiler->normalCompiler.tabs; i++){
-				strcat(transpiler->normalCompiler.code, "\t");
-			};
-			inIfStatement = true;
+			strcat(transpiler->normalCompiler.code, "\n\t");
+				
 			unsigned int orgScope = scope;
 			int k = i;
 			for (; k < arr_size(transpiler->arr); k++){
@@ -1764,10 +1756,10 @@ void transpile(struct Transpiler *transpiler, int *ip){
 				else if (strcmp(arr_get(transpiler->arr, k).data, "}") == 0){scope--;if(scope == 0){break;}};
 			};
 			scope = orgScope + 1;
-			strcat(transpiler->normalCompiler.code, "jz end_");
-			char kstr[50];sprintf(kstr, "%d", k);
-			strcat(transpiler->normalCompiler.code, kstr);
-			strcat(transpiler->normalCompiler.code, "\n");
+			// strcat(transpiler->normalCompiler.code, "jz end_");
+			// char kstr[50];sprintf(kstr, "%d", k);
+			// strcat(transpiler->normalCompiler.code, kstr);
+			// strcat(transpiler->normalCompiler.code, "\n\t");
 		}
 	};
 };
@@ -1799,8 +1791,6 @@ void run_transpiler(struct Transpiler *transpiler){
 		arr_push(transpiler->simulation.registers, "r11");
 		arr_push(transpiler->simulation.registers, "");
 		arr_push(transpiler->simulation.registers, "r12");
-		arr_push(transpiler->simulation.registers, "");
-		arr_push(transpiler->simulation.registers, "r13");
 		transpiler->simulation.variablelength = 0;
 		for (int i=0; i<=transpiler->arr->len; i++){
 			transpile(transpiler, &i);
@@ -1887,7 +1877,6 @@ void run_transpiler(struct Transpiler *transpiler){
 	   };
 	   char *str = "global start\n";
 	   fwrite(str, sizeof(char), strlen(str), f);
-	   transpiler->normalCompiler.tabs = 0;
 
 
 		for (int i=0; i<=transpiler->arr->len; i++){
