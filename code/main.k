@@ -1,10 +1,11 @@
 include "stdio.k"
 
-msg: "Hello World\n"
+msg: 'Hello World\n'
 msglen: $msg
 
 main {
-    rsi = msg
+    char a = 25383;
+    rsi = a
     rdx = msglen
     call print
 }

@@ -1,0 +1,669 @@
+./run.sh%                                                                                                                                                                                                                                  
+vishnu@Vishnus-MacBook-Pro key % ./run.sh
+main.c:667:10: warning: address of stack memory associated with local variable 'res' returned [-Wreturn-stack-address]
+                return res;
+                       ^~~
+main.c:672:10: warning: address of stack memory associated with local variable 'res' returned [-Wreturn-stack-address]
+                return res;
+                       ^~~
+main.c:677:10: warning: address of stack memory associated with local variable 'res' returned [-Wreturn-stack-address]
+                return res;
+                       ^~~
+main.c:682:10: warning: address of stack memory associated with local variable 'res' returned [-Wreturn-stack-address]
+                return res;
+                       ^~~
+main.c:695:10: warning: address of stack memory associated with local variable 'res' returned [-Wreturn-stack-address]
+                return res;
+                       ^~~
+main.c:718:22: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                if (strcmp(arr_get(transpiler->simulation.variables, z).bytes, expr) == 0){
+                           ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./../libs/array/array.h:56:27: note: expanded from macro 'arr_get'
+#define arr_get(arr, idx) arr->value[idx]
+                          ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/string.h:77:25: note: passing argument to parameter '__s1' here
+int      strcmp(const char *__s1, const char *__s2);
+                            ^
+main.c:719:51: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                        return transpile_expr(transpiler, z+1, arr_get(transpiler->simulation.variables, z+1).bytes);
+                                                               ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./../libs/array/array.h:56:27: note: expanded from macro 'arr_get'
+#define arr_get(arr, idx) arr->value[idx]
+                          ^
+main.c:659:66: note: passing argument to parameter 'expr' here
+char *transpile_expr(struct Transpiler *transpiler, int z, char *expr){
+                                                                 ^
+main.c:737:28: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                strcpy((char*)con.bytes, transpile_expr_byte(transpiler, i).bytes);
+                                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_string.h:84:33: note: expanded from macro 'strcpy'
+                __builtin___strcpy_chk (dest, __VA_ARGS__, __darwin_obsz (dest))
+                                              ^~~~~~~~~~~
+main.c:739:28: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                strcat((char*)con.bytes, transpile_expr_byte(transpiler, i+3).bytes);
+                                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_string.h:135:33: note: expanded from macro 'strcat'
+                __builtin___strcat_chk (dest, __VA_ARGS__, __darwin_obsz (dest))
+                                              ^~~~~~~~~~~
+main.c:745:28: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                strcpy((char*)con.bytes, transpile_expr_byte(transpiler, i).bytes);
+                                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_string.h:84:33: note: expanded from macro 'strcpy'
+                __builtin___strcpy_chk (dest, __VA_ARGS__, __darwin_obsz (dest))
+                                              ^~~~~~~~~~~
+main.c:747:28: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                strcat((char*)con.bytes, transpile_expr_byte(transpiler, i+3).bytes);
+                                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_string.h:135:33: note: expanded from macro 'strcat'
+                __builtin___strcat_chk (dest, __VA_ARGS__, __darwin_obsz (dest))
+                                              ^~~~~~~~~~~
+main.c:753:28: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                strcpy((char*)con.bytes, transpile_expr_byte(transpiler, i).bytes);
+                                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_string.h:84:33: note: expanded from macro 'strcpy'
+                __builtin___strcpy_chk (dest, __VA_ARGS__, __darwin_obsz (dest))
+                                              ^~~~~~~~~~~
+main.c:755:28: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                strcat((char*)con.bytes, transpile_expr_byte(transpiler, i+3).bytes);
+                                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_string.h:135:33: note: expanded from macro 'strcat'
+                __builtin___strcat_chk (dest, __VA_ARGS__, __darwin_obsz (dest))
+                                              ^~~~~~~~~~~
+main.c:761:28: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                strcpy((char*)con.bytes, transpile_expr_byte(transpiler, i).bytes);
+                                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_string.h:84:33: note: expanded from macro 'strcpy'
+                __builtin___strcpy_chk (dest, __VA_ARGS__, __darwin_obsz (dest))
+                                              ^~~~~~~~~~~
+main.c:763:28: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                strcat((char*)con.bytes, transpile_expr_byte(transpiler, i+2).bytes);
+                                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_string.h:135:33: note: expanded from macro 'strcat'
+                __builtin___strcat_chk (dest, __VA_ARGS__, __darwin_obsz (dest))
+                                              ^~~~~~~~~~~
+main.c:769:28: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                strcpy((char*)con.bytes, transpile_expr_byte(transpiler, i).bytes);
+                                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_string.h:84:33: note: expanded from macro 'strcpy'
+                __builtin___strcpy_chk (dest, __VA_ARGS__, __darwin_obsz (dest))
+                                              ^~~~~~~~~~~
+main.c:771:28: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                strcat((char*)con.bytes, transpile_expr_byte(transpiler, i+2).bytes);
+                                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_string.h:135:33: note: expanded from macro 'strcat'
+                __builtin___strcat_chk (dest, __VA_ARGS__, __darwin_obsz (dest))
+                                              ^~~~~~~~~~~
+main.c:783:10: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                strcpy(con.bytes, arr_get(transpiler->arr, i).data);
+                       ^~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_string.h:84:27: note: expanded from macro 'strcpy'
+                __builtin___strcpy_chk (dest, __VA_ARGS__, __darwin_obsz (dest))
+                                        ^~~~
+main.c:786:10: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                strcpy(con.bytes, arr_get(transpiler->arr, i).data);
+                       ^~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_string.h:84:27: note: expanded from macro 'strcpy'
+                __builtin___strcpy_chk (dest, __VA_ARGS__, __darwin_obsz (dest))
+                                        ^~~~
+main.c:793:17: warning: backslash and newline separated by space [-Wbackslash-newline-escape]
+                char ln[50]; \ 
+                              ^
+main.c:818:2: warning: data argument not used by format string [-Wformat-extra-args]
+        print_ln_error(trace, "", "", 1);
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+main.c:798:30: note: expanded from macro 'print_ln_error'
+                printf("\e[0;30m|\e[0m\n", transpiler->arr->value[extr].row+1, line); \
+                       ~~~~~~~~~~~~~~~~~~  ^
+main.c:818:2: warning: data argument not used by format string [-Wformat-extra-args]
+        print_ln_error(trace, "", "", 1);
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+main.c:803:28: note: expanded from macro 'print_ln_error'
+                printf("\e[0;30m|\e[0m", transpiler->arr->value[extr].row+1, line); \
+                       ~~~~~~~~~~~~~~~~  ^
+main.c:822:2: warning: data argument not used by format string [-Wformat-extra-args]
+        print_ln_error(extr, "", "", 1);
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+main.c:798:30: note: expanded from macro 'print_ln_error'
+                printf("\e[0;30m|\e[0m\n", transpiler->arr->value[extr].row+1, line); \
+                       ~~~~~~~~~~~~~~~~~~  ^
+main.c:822:2: warning: data argument not used by format string [-Wformat-extra-args]
+        print_ln_error(extr, "", "", 1);
+        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+main.c:803:28: note: expanded from macro 'print_ln_error'
+                printf("\e[0;30m|\e[0m", transpiler->arr->value[extr].row+1, line); \
+                       ~~~~~~~~~~~~~~~~  ^
+main.c:832:5: warning: data argument not used by format string [-Wformat-extra-args]
+                                print_ln_error(trace, "\e[0;31m\e[9m", "\e[0m", 0);
+                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+main.c:798:30: note: expanded from macro 'print_ln_error'
+                printf("\e[0;30m|\e[0m\n", transpiler->arr->value[extr].row+1, line); \
+                       ~~~~~~~~~~~~~~~~~~  ^
+main.c:832:5: warning: data argument not used by format string [-Wformat-extra-args]
+                                print_ln_error(trace, "\e[0;31m\e[9m", "\e[0m", 0);
+                                ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+main.c:803:28: note: expanded from macro 'print_ln_error'
+                printf("\e[0;30m|\e[0m", transpiler->arr->value[extr].row+1, line); \
+                       ~~~~~~~~~~~~~~~~  ^
+main.c:836:32: warning: data argument not used by format string [-Wformat-extra-args]
+                                printf("\e[0;30m|\e[0m\n", transpiler->arr->value[trace].row+1, line);
+                                       ~~~~~~~~~~~~~~~~~~  ^
+main.c:852:82: warning: format specifies type 'int' but the argument has type 'unsigned long' [-Wformat]
+                        printf("\nIn order to correct the mistake, change \e[1;37mrdx\e[0m to %d.\n", strlen(optional), strlen(optional));
+                                                                                              ~~      ^~~~~~~~~~~~~~~~
+                                                                                              %lu
+main.c:852:100: warning: data argument not used by format string [-Wformat-extra-args]
+                        printf("\nIn order to correct the mistake, change \e[1;37mrdx\e[0m to %d.\n", strlen(optional), strlen(optional));
+                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                    ^
+main.c:853:4: warning: data argument not used by format string [-Wformat-extra-args]
+                        print_ln_error(extr, "\e[0;31m\e[9m", "\e[0m", 0);
+                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+main.c:798:30: note: expanded from macro 'print_ln_error'
+                printf("\e[0;30m|\e[0m\n", transpiler->arr->value[extr].row+1, line); \
+                       ~~~~~~~~~~~~~~~~~~  ^
+main.c:853:4: warning: data argument not used by format string [-Wformat-extra-args]
+                        print_ln_error(extr, "\e[0;31m\e[9m", "\e[0m", 0);
+                        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+main.c:803:28: note: expanded from macro 'print_ln_error'
+                printf("\e[0;30m|\e[0m", transpiler->arr->value[extr].row+1, line); \
+                       ~~~~~~~~~~~~~~~~  ^
+main.c:865:25: warning: format specifies type 'int' but the argument has type 'unsigned long' [-Wformat]
+                        sprintf(linea, "%d", strlen(optional));
+                                        ~~   ^~~~~~~~~~~~~~~~
+                                        %lu
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_stdio.h:47:56: note: expanded from macro 'sprintf'
+  __builtin___sprintf_chk (str, 0, __darwin_obsz(str), __VA_ARGS__)
+                                                       ^~~~~~~~~~~
+main.c:872:31: warning: data argument not used by format string [-Wformat-extra-args]
+                        printf("\e[0;30m|\e[0m\n", transpiler->arr->value[extr].row+1, line);
+                               ~~~~~~~~~~~~~~~~~~  ^
+main.c:894:10: warning: address of stack memory associated with local variable 'res' returned [-Wreturn-stack-address]
+                return res;
+                       ^~~
+main.c:907:10: warning: address of stack memory associated with local variable 'res' returned [-Wreturn-stack-address]
+                return res;
+                       ^~~
+main.c:910:9: warning: address of stack memory associated with local variable 'res' returned [-Wreturn-stack-address]
+        return res;
+               ^~~
+main.c:1087:11: warning: address of stack memory associated with local variable 'sres' returned [-Wreturn-stack-address]
+                        return sres;
+                               ^~~~
+main.c:1109:11: warning: address of stack memory associated with local variable 'sres' returned [-Wreturn-stack-address]
+                        return sres;
+                               ^~~~
+main.c:1152:13: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                                        strcpy(s.bytes, val);
+                                               ^~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_string.h:84:27: note: expanded from macro 'strcpy'
+                __builtin___strcpy_chk (dest, __VA_ARGS__, __darwin_obsz (dest))
+                                        ^~~~
+main.c:1159:13: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                                        strcpy(s.bytes, transpile_expr(transpiler, i+2, arr_get(transpiler->arr, i+2).data));
+                                               ^~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_string.h:84:27: note: expanded from macro 'strcpy'
+                __builtin___strcpy_chk (dest, __VA_ARGS__, __darwin_obsz (dest))
+                                        ^~~~
+main.c:1259:84: warning: data argument not used by format string [-Wformat-extra-args]
+                                                sprintf(err, "Number of characters to print higher than length of message.", atoi(rax));
+                                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_stdio.h:47:56: note: expanded from macro 'sprintf'
+  __builtin___sprintf_chk (str, 0, __darwin_obsz(str), __VA_ARGS__)
+                                                       ^~~~~~~~~~~
+main.c:1558:77: error: too few arguments to function call, expected 3, have 2
+                                strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, i+2), "i16");
+                                                                               ~~~~~~~~~                ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_string.h:135:33: note: expanded from macro 'strcat'
+                __builtin___strcat_chk (dest, __VA_ARGS__, __darwin_obsz (dest))
+                                              ^~~~~~~~~~~
+main.c:884:7: note: 'parse_asm' declared here
+char *parse_asm(struct Transpiler *transpiler, int i, char *type){
+      ^
+main.c:1566:77: error: too few arguments to function call, expected 3, have 2
+                                strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, i+2), "i32");
+                                                                               ~~~~~~~~~                ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_string.h:135:33: note: expanded from macro 'strcat'
+                __builtin___strcat_chk (dest, __VA_ARGS__, __darwin_obsz (dest))
+                                              ^~~~~~~~~~~
+main.c:884:7: note: 'parse_asm' declared here
+char *parse_asm(struct Transpiler *transpiler, int i, char *type){
+      ^
+main.c:1574:77: error: too few arguments to function call, expected 3, have 2
+                                strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, i+2), "i64");
+                                                                               ~~~~~~~~~                ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_string.h:135:33: note: expanded from macro 'strcat'
+                __builtin___strcat_chk (dest, __VA_ARGS__, __darwin_obsz (dest))
+                                              ^~~~~~~~~~~
+main.c:884:7: note: 'parse_asm' declared here
+char *parse_asm(struct Transpiler *transpiler, int i, char *type){
+      ^
+main.c:1582:77: error: too few arguments to function call, expected 3, have 2
+                                strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, i+2), "i8");
+                                                                               ~~~~~~~~~                ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_string.h:135:33: note: expanded from macro 'strcat'
+                __builtin___strcat_chk (dest, __VA_ARGS__, __darwin_obsz (dest))
+                                              ^~~~~~~~~~~
+main.c:884:7: note: 'parse_asm' declared here
+char *parse_asm(struct Transpiler *transpiler, int i, char *type){
+      ^
+41 warnings and 4 errors generated.
+interp.c:432:17: warning: backslash and newline separated by space [-Wbackslash-newline-escape]
+                char ln[50]; \ 
+                              ^
+interp.c:456:56: warning: data argument not used by format string [-Wformat-extra-args]
+    print_ln_error("syscall", "", "", instruction.col, instruction.row, 1);
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~
+interp.c:437:30: note: expanded from macro 'print_ln_error'
+                printf("\e[0;30m|\e[0m\n", row+1, line); \
+                       ~~~~~~~~~~~~~~~~~~  ^
+interp.c:456:56: warning: data argument not used by format string [-Wformat-extra-args]
+    print_ln_error("syscall", "", "", instruction.col, instruction.row, 1);
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~
+interp.c:442:28: note: expanded from macro 'print_ln_error'
+                printf("\e[0;30m|\e[0m", row+1, line); \
+                       ~~~~~~~~~~~~~~~~  ^
+interp.c:475:11: warning: initializing 'char *' with an expression of type 'uint8_t[40]' (aka 'unsigned char[40]') converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+    char *data = cons.bytes;
+          ^      ~~~~~~~~~~
+interp.c:480:35: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+        char *conbytecpy = strdup(cons.bytes);
+                                  ^~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/string.h:117:26: note: passing argument to parameter '__s1' here
+char    *strdup(const char *__s1);
+                            ^
+interp.c:485:15: warning: initializing 'char *' with an expression of type 'uint8_t *' (aka 'unsigned char *') converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+        char *b = cons.bytes+strlen(a)+strlen("^(*&");
+              ^   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+interp.c:495:35: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+        char *conbytecpy = strdup(cons.bytes);
+                                  ^~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/string.h:117:26: note: passing argument to parameter '__s1' here
+char    *strdup(const char *__s1);
+                            ^
+interp.c:500:15: warning: initializing 'char *' with an expression of type 'uint8_t *' (aka 'unsigned char *') converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+        char *b = cons.bytes+strlen(a)+strlen("^(*&");
+              ^   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+interp.c:510:35: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+        char *conbytecpy = strdup(cons.bytes);
+                                  ^~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/string.h:117:26: note: passing argument to parameter '__s1' here
+char    *strdup(const char *__s1);
+                            ^
+interp.c:515:15: warning: initializing 'char *' with an expression of type 'uint8_t *' (aka 'unsigned char *') converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+        char *b = cons.bytes+strlen(a)+strlen("^(*&");
+              ^   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+interp.c:525:35: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+        char *conbytecpy = strdup(cons.bytes);
+                                  ^~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/string.h:117:26: note: passing argument to parameter '__s1' here
+char    *strdup(const char *__s1);
+                            ^
+interp.c:530:15: warning: initializing 'char *' with an expression of type 'uint8_t *' (aka 'unsigned char *') converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+        char *b = cons.bytes+strlen(a)+strlen("^(*&");
+              ^   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+interp.c:540:35: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+        char *conbytecpy = strdup(cons.bytes);
+                                  ^~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/string.h:117:26: note: passing argument to parameter '__s1' here
+char    *strdup(const char *__s1);
+                            ^
+interp.c:545:15: warning: initializing 'char *' with an expression of type 'uint8_t *' (aka 'unsigned char *') converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+        char *b = cons.bytes+strlen(a)+strlen("^(*&");
+              ^   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+interp.c:562:37: warning: format specifies type 'int' but the argument has type 'unsigned long' [-Wformat]
+                sprintf(data, "%d", strlen(parse(constants[i])));
+                               ~~   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+                               %lu
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_stdio.h:47:56: note: expanded from macro 'sprintf'
+  __builtin___sprintf_chk (str, 0, __darwin_obsz(str), __VA_ARGS__)
+                                                       ^~~~~~~~~~~
+interp.c:569:20: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+        if (strcmp(registers->value[i].bytes, data) == 0){
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/string.h:77:25: note: passing argument to parameter '__s1' here
+int      strcmp(const char *__s1, const char *__s2);
+                            ^
+interp.c:571:37: warning: format specifies type 'int' but the argument has type 'unsigned long' [-Wformat]
+                sprintf(data, "%d", strlen(parse(registers->value[i])));
+                               ~~   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                               %lu
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_stdio.h:47:56: note: expanded from macro 'sprintf'
+  __builtin___sprintf_chk (str, 0, __darwin_obsz(str), __VA_ARGS__)
+                                                       ^~~~~~~~~~~
+interp.c:578:20: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+        if (strcmp(variables->value[i].bytes, data) == 0){
+                   ^~~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/string.h:77:25: note: passing argument to parameter '__s1' here
+int      strcmp(const char *__s1, const char *__s2);
+                            ^
+interp.c:580:37: warning: format specifies type 'int' but the argument has type 'unsigned long' [-Wformat]
+                sprintf(data, "%d", strlen(parse(variables->value[i])));
+                               ~~   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                               %lu
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_stdio.h:47:56: note: expanded from macro 'sprintf'
+  __builtin___sprintf_chk (str, 0, __darwin_obsz(str), __VA_ARGS__)
+                                                       ^~~~~~~~~~~
+interp.c:586:10: warning: assigning to 'char *' from 'uint8_t[40]' (aka 'unsigned char[40]') converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+    data = cons.bytes;
+         ^ ~~~~~~~~~~
+interp.c:604:16: warning: passing 'uint8_t[10]' (aka 'unsigned char[10]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+    if (strcmp(instructions[i].method, "main") && *pass == 0){
+               ^~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/string.h:77:25: note: passing argument to parameter '__s1' here
+int      strcmp(const char *__s1, const char *__s2);
+                            ^
+interp.c:611:28: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                if (strcmp(registers->value[z].bytes, instructions[i].operand1) == 0){
+                           ^~~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/string.h:77:25: note: passing argument to parameter '__s1' here
+int      strcmp(const char *__s1, const char *__s2);
+                            ^
+interp.c:611:55: warning: passing 'uint8_t[10]' (aka 'unsigned char[10]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                if (strcmp(registers->value[z].bytes, instructions[i].operand1) == 0){
+                                                      ^~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/string.h:77:43: note: passing argument to parameter '__s2' here
+int      strcmp(const char *__s1, const char *__s2);
+                                              ^
+interp.c:613:28: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                    strcpy(registers->value[z+1].bytes, parse(instructions[i].operand2));
+                           ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_string.h:84:27: note: expanded from macro 'strcpy'
+                __builtin___strcpy_chk (dest, __VA_ARGS__, __darwin_obsz (dest))
+                                        ^~~~
+interp.c:624:12: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                                strcpy(s.bytes, instructions[i].operand1);
+                                       ^~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_string.h:84:27: note: expanded from macro 'strcpy'
+                __builtin___strcpy_chk (dest, __VA_ARGS__, __darwin_obsz (dest))
+                                        ^~~~
+interp.c:624:21: warning: passing 'uint8_t[10]' (aka 'unsigned char[10]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                                strcpy(s.bytes, instructions[i].operand1);
+                                                ^~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_string.h:84:33: note: expanded from macro 'strcpy'
+                __builtin___strcpy_chk (dest, __VA_ARGS__, __darwin_obsz (dest))
+                                              ^~~~~~~~~~~
+interp.c:631:12: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                                strcpy(s.bytes, parse(instructions[i].operand2));
+                                       ^~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_string.h:84:27: note: expanded from macro 'strcpy'
+                __builtin___strcpy_chk (dest, __VA_ARGS__, __darwin_obsz (dest))
+                                        ^~~~
+interp.c:642:21: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                                sprintf(arr_get(registers, 1).bytes, "%s", buf);
+                                ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./../libs/array/array.h:56:27: note: expanded from macro 'arr_get'
+#define arr_get(arr, idx) arr->value[idx]
+                          ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_stdio.h:47:28: note: expanded from macro 'sprintf'
+  __builtin___sprintf_chk (str, 0, __darwin_obsz(str), __VA_ARGS__)
+                           ^~~
+interp.c:646:21: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                                sprintf(arr_get(registers, 1).bytes, "%d", open(rdi, O_RDWR | O_CREAT));
+                                ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./../libs/array/array.h:56:27: note: expanded from macro 'arr_get'
+#define arr_get(arr, idx) arr->value[idx]
+                          ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_stdio.h:47:28: note: expanded from macro 'sprintf'
+  __builtin___sprintf_chk (str, 0, __darwin_obsz(str), __VA_ARGS__)
+                           ^~~
+interp.c:672:28: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                if (strcmp(registers->value[z].bytes, instructions[i].operand1) == 0){
+                           ^~~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/string.h:77:25: note: passing argument to parameter '__s1' here
+int      strcmp(const char *__s1, const char *__s2);
+                            ^
+interp.c:672:55: warning: passing 'uint8_t[10]' (aka 'unsigned char[10]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                if (strcmp(registers->value[z].bytes, instructions[i].operand1) == 0){
+                                                      ^~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/string.h:77:43: note: passing argument to parameter '__s2' here
+int      strcmp(const char *__s1, const char *__s2);
+                                              ^
+interp.c:674:64: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                                        sprintf(arr_get(registers, z+1).bytes, "%d", atoi(arr_get(registers, z+1).bytes)+1);
+                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~
+./../libs/array/array.h:56:27: note: expanded from macro 'arr_get'
+#define arr_get(arr, idx) arr->value[idx]
+                          ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_stdio.h:47:56: note: expanded from macro 'sprintf'
+  __builtin___sprintf_chk (str, 0, __darwin_obsz(str), __VA_ARGS__)
+                                                       ^~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/stdlib.h:135:23: note: passing argument to parameter here
+int      atoi(const char *);
+                          ^
+interp.c:674:22: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                                        sprintf(arr_get(registers, z+1).bytes, "%d", atoi(arr_get(registers, z+1).bytes)+1);
+                                        ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./../libs/array/array.h:56:27: note: expanded from macro 'arr_get'
+#define arr_get(arr, idx) arr->value[idx]
+                          ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_stdio.h:47:28: note: expanded from macro 'sprintf'
+  __builtin___sprintf_chk (str, 0, __darwin_obsz(str), __VA_ARGS__)
+                           ^~~
+interp.c:676:54: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                        char *bytes = strdup(arr_get(registers, z+1).bytes);
+                                             ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~
+./../libs/array/array.h:56:27: note: expanded from macro 'arr_get'
+#define arr_get(arr, idx) arr->value[idx]
+                          ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/string.h:117:26: note: passing argument to parameter '__s1' here
+char    *strdup(const char *__s1);
+                            ^
+interp.c:678:40: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                        strcpy(arr_get(registers, z+1).bytes, bytes);
+                        ~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./../libs/array/array.h:56:27: note: expanded from macro 'arr_get'
+#define arr_get(arr, idx) arr->value[idx]
+                          ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_string.h:84:27: note: expanded from macro 'strcpy'
+                __builtin___strcpy_chk (dest, __VA_ARGS__, __darwin_obsz (dest))
+                                        ^~~~
+interp.c:684:28: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                if (strcmp(registers->value[z].bytes, instructions[i].operand1) == 0){
+                           ^~~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/string.h:77:25: note: passing argument to parameter '__s1' here
+int      strcmp(const char *__s1, const char *__s2);
+                            ^
+interp.c:684:55: warning: passing 'uint8_t[10]' (aka 'unsigned char[10]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                if (strcmp(registers->value[z].bytes, instructions[i].operand1) == 0){
+                                                      ^~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/string.h:77:43: note: passing argument to parameter '__s2' here
+int      strcmp(const char *__s1, const char *__s2);
+                                              ^
+interp.c:686:64: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                                        sprintf(arr_get(registers, z+1).bytes, "%d", atoi(arr_get(registers, z+1).bytes)-1);
+                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~
+./../libs/array/array.h:56:27: note: expanded from macro 'arr_get'
+#define arr_get(arr, idx) arr->value[idx]
+                          ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_stdio.h:47:56: note: expanded from macro 'sprintf'
+  __builtin___sprintf_chk (str, 0, __darwin_obsz(str), __VA_ARGS__)
+                                                       ^~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/stdlib.h:135:23: note: passing argument to parameter here
+int      atoi(const char *);
+                          ^
+interp.c:686:22: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                                        sprintf(arr_get(registers, z+1).bytes, "%d", atoi(arr_get(registers, z+1).bytes)-1);
+                                        ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./../libs/array/array.h:56:27: note: expanded from macro 'arr_get'
+#define arr_get(arr, idx) arr->value[idx]
+                          ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_stdio.h:47:28: note: expanded from macro 'sprintf'
+  __builtin___sprintf_chk (str, 0, __darwin_obsz(str), __VA_ARGS__)
+                           ^~~
+interp.c:688:31: warning: initializing 'char *' with an expression of type 'uint8_t[40]' (aka 'unsigned char[40]') converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                        char *bytes = arr_get(registers, z+1).bytes;
+                              ^       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+interp.c:690:40: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                        strcpy(arr_get(registers, z+1).bytes, bytes);
+                        ~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./../libs/array/array.h:56:27: note: expanded from macro 'arr_get'
+#define arr_get(arr, idx) arr->value[idx]
+                          ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_string.h:84:27: note: expanded from macro 'strcpy'
+                __builtin___strcpy_chk (dest, __VA_ARGS__, __darwin_obsz (dest))
+                                        ^~~~
+interp.c:696:28: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                if (strcmp(registers->value[z].bytes, instructions[i].operand1) == 0){
+                           ^~~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/string.h:77:25: note: passing argument to parameter '__s1' here
+int      strcmp(const char *__s1, const char *__s2);
+                            ^
+interp.c:696:55: warning: passing 'uint8_t[10]' (aka 'unsigned char[10]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                if (strcmp(registers->value[z].bytes, instructions[i].operand1) == 0){
+                                                      ^~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/string.h:77:43: note: passing argument to parameter '__s2' here
+int      strcmp(const char *__s1, const char *__s2);
+                                              ^
+interp.c:698:64: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                                        sprintf(arr_get(registers, z+1).bytes, "%d", atoi(arr_get(registers, z+1).bytes)+atoi(instructions[i].operand2.bytes));
+                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./../libs/array/array.h:56:27: note: expanded from macro 'arr_get'
+#define arr_get(arr, idx) arr->value[idx]
+                          ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_stdio.h:47:56: note: expanded from macro 'sprintf'
+  __builtin___sprintf_chk (str, 0, __darwin_obsz(str), __VA_ARGS__)
+                                                       ^~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/stdlib.h:135:23: note: passing argument to parameter here
+int      atoi(const char *);
+                          ^
+interp.c:698:92: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                                        sprintf(arr_get(registers, z+1).bytes, "%d", atoi(arr_get(registers, z+1).bytes)+atoi(instructions[i].operand2.bytes));
+                                                                                                                              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_stdio.h:47:56: note: expanded from macro 'sprintf'
+  __builtin___sprintf_chk (str, 0, __darwin_obsz(str), __VA_ARGS__)
+                                                       ^~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/stdlib.h:135:23: note: passing argument to parameter here
+int      atoi(const char *);
+                          ^
+interp.c:698:22: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                                        sprintf(arr_get(registers, z+1).bytes, "%d", atoi(arr_get(registers, z+1).bytes)+atoi(instructions[i].operand2.bytes));
+                                        ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./../libs/array/array.h:56:27: note: expanded from macro 'arr_get'
+#define arr_get(arr, idx) arr->value[idx]
+                          ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_stdio.h:47:28: note: expanded from macro 'sprintf'
+  __builtin___sprintf_chk (str, 0, __darwin_obsz(str), __VA_ARGS__)
+                           ^~~
+interp.c:700:54: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                        char *bytes = strdup(arr_get(registers, z+1).bytes);
+                                             ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~
+./../libs/array/array.h:56:27: note: expanded from macro 'arr_get'
+#define arr_get(arr, idx) arr->value[idx]
+                          ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/string.h:117:26: note: passing argument to parameter '__s1' here
+char    *strdup(const char *__s1);
+                            ^
+interp.c:701:37: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                        bytes+=atoi(instructions[i].operand2.bytes);
+                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/stdlib.h:135:23: note: passing argument to parameter here
+int      atoi(const char *);
+                          ^
+interp.c:702:40: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                        strcpy(arr_get(registers, z+1).bytes, bytes);
+                        ~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./../libs/array/array.h:56:27: note: expanded from macro 'arr_get'
+#define arr_get(arr, idx) arr->value[idx]
+                          ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_string.h:84:27: note: expanded from macro 'strcpy'
+                __builtin___strcpy_chk (dest, __VA_ARGS__, __darwin_obsz (dest))
+                                        ^~~~
+interp.c:708:28: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                if (strcmp(registers->value[z].bytes, instructions[i].operand1) == 0){
+                           ^~~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/string.h:77:25: note: passing argument to parameter '__s1' here
+int      strcmp(const char *__s1, const char *__s2);
+                            ^
+interp.c:708:55: warning: passing 'uint8_t[10]' (aka 'unsigned char[10]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                if (strcmp(registers->value[z].bytes, instructions[i].operand1) == 0){
+                                                      ^~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/string.h:77:43: note: passing argument to parameter '__s2' here
+int      strcmp(const char *__s1, const char *__s2);
+                                              ^
+interp.c:710:64: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                                        sprintf(arr_get(registers, z+1).bytes, "%d", atoi(arr_get(registers, z+1).bytes)-atoi(instructions[i].operand2.bytes));
+                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./../libs/array/array.h:56:27: note: expanded from macro 'arr_get'
+#define arr_get(arr, idx) arr->value[idx]
+                          ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_stdio.h:47:56: note: expanded from macro 'sprintf'
+  __builtin___sprintf_chk (str, 0, __darwin_obsz(str), __VA_ARGS__)
+                                                       ^~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/stdlib.h:135:23: note: passing argument to parameter here
+int      atoi(const char *);
+                          ^
+interp.c:710:92: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                                        sprintf(arr_get(registers, z+1).bytes, "%d", atoi(arr_get(registers, z+1).bytes)-atoi(instructions[i].operand2.bytes));
+                                                                                                                              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_stdio.h:47:56: note: expanded from macro 'sprintf'
+  __builtin___sprintf_chk (str, 0, __darwin_obsz(str), __VA_ARGS__)
+                                                       ^~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/stdlib.h:135:23: note: passing argument to parameter here
+int      atoi(const char *);
+                          ^
+interp.c:710:22: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                                        sprintf(arr_get(registers, z+1).bytes, "%d", atoi(arr_get(registers, z+1).bytes)-atoi(instructions[i].operand2.bytes));
+                                        ~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./../libs/array/array.h:56:27: note: expanded from macro 'arr_get'
+#define arr_get(arr, idx) arr->value[idx]
+                          ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_stdio.h:47:28: note: expanded from macro 'sprintf'
+  __builtin___sprintf_chk (str, 0, __darwin_obsz(str), __VA_ARGS__)
+                           ^~~
+interp.c:712:54: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                        char *bytes = strdup(arr_get(registers, z+1).bytes);
+                                             ~~~~~~~~^~~~~~~~~~~~~~~~~~~~~
+./../libs/array/array.h:56:27: note: expanded from macro 'arr_get'
+#define arr_get(arr, idx) arr->value[idx]
+                          ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/string.h:117:26: note: passing argument to parameter '__s1' here
+char    *strdup(const char *__s1);
+                            ^
+interp.c:713:37: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                        bytes-=atoi(instructions[i].operand2.bytes);
+                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/stdlib.h:135:23: note: passing argument to parameter here
+int      atoi(const char *);
+                          ^
+interp.c:714:40: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                        strcpy(arr_get(registers, z+1).bytes, bytes);
+                        ~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./../libs/array/array.h:56:27: note: expanded from macro 'arr_get'
+#define arr_get(arr, idx) arr->value[idx]
+                          ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/secure/_string.h:84:27: note: expanded from macro 'strcpy'
+                __builtin___strcpy_chk (dest, __VA_ARGS__, __darwin_obsz (dest))
+                                        ^~~~
+interp.c:721:28: warning: passing 'uint8_t[10]' (aka 'unsigned char[10]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                if (strcmp(instructions[j].method, instructions[i].operand1)){
+                           ^~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/string.h:77:25: note: passing argument to parameter '__s1' here
+int      strcmp(const char *__s1, const char *__s2);
+                            ^
+interp.c:721:52: warning: passing 'uint8_t[10]' (aka 'unsigned char[10]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                if (strcmp(instructions[j].method, instructions[i].operand1)){
+                                                   ^~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/string.h:77:43: note: passing argument to parameter '__s2' here
+int      strcmp(const char *__s1, const char *__s2);
+                                              ^
+interp.c:728:22: warning: passing 'uint8_t[40]' (aka 'unsigned char[40]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                                if (atoi(arr_get(registers, 1).bytes)==0){
+                                         ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+./../libs/array/array.h:56:27: note: expanded from macro 'arr_get'
+#define arr_get(arr, idx) arr->value[idx]
+                          ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/stdlib.h:135:23: note: passing argument to parameter here
+int      atoi(const char *);
+                          ^
+interp.c:733:28: warning: passing 'uint8_t[10]' (aka 'unsigned char[10]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                if (strcmp(instructions[j].method, instructions[i].operand1)){
+                           ^~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/string.h:77:25: note: passing argument to parameter '__s1' here
+int      strcmp(const char *__s1, const char *__s2);
+                            ^
+interp.c:733:52: warning: passing 'uint8_t[10]' (aka 'unsigned char[10]') to parameter of type 'const char *' converts between pointers to integer types where one is of the unique plain 'char' type and the other is not [-Wpointer-sign]
+                if (strcmp(instructions[j].method, instructions[i].operand1)){
+                                                   ^~~~~~~~~~~~~~~~~~~~~~~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/string.h:77:43: note: passing argument to parameter '__s2' here
+int      strcmp(const char *__s1, const char *__s2);
+                                              ^
+62 warnings generated.

@@ -567,7 +567,7 @@ void split(arr_String *arr, char data[300]){
 			strncpy(arr->value[arr_size(arr)-1].data, "\"", 135);
 		};
 		if (mode == 1 || mode == 4){
-			if (data[i] == '"'){
+			if (data[i] == '"' || data[i] == '\''){
 				mode = 0;
 			}else {
 				other();
@@ -614,7 +614,7 @@ void split(arr_String *arr, char data[300]){
 			}
 			col = 0;
 			row ++;
-		}else if(data[i] == '"'){
+		}else if(data[i] == '"' || data[i] == '\''){
 			mode = 1;
 		}
 		else{
@@ -650,7 +650,7 @@ int currentMode = 0; // Normal mode
 char *transpile_expr(struct Transpiler *transpiler, int z, char *expr);
 
 char *transpile_phrase(struct Transpiler *transpiler, char *expr){
-	if (expr[0] == '"'){
+	if (expr[0] == '"' || expr[0] == '\''){
 		expr++;
 	};
 	return expr;
@@ -775,7 +775,7 @@ struct Constant transpile_expr_byte(struct Transpiler *transpiler, int i){
 		strcpy(arr_get(transpiler->arr, i).data, strdup(arr_get(transpiler->arr, i).data)+1);
 		con.type = CONSTANT_LEN;
 		memcpy(con.bytes, arr_get(transpiler->arr, i).data, sizeof(con.bytes));
-	}else if(arr_get(transpiler->arr, i).data[0] == '"'){
+	}else if(arr_get(transpiler->arr, i).data[0] == '"' || arr_get(transpiler->arr, i).data[0] == '\''){
 		con.type = CONSTANT_STRING;
 		memcpy(con.bytes, arr_get(transpiler->arr, i).data, sizeof(con.bytes));
 	}else if(isnumber(arr_get(transpiler->arr, i).data[0])){
@@ -881,18 +881,35 @@ void error(struct Transpiler *transpiler, char *info, char* type, char* i, int t
 
 void transpile(struct Transpiler *transpiler, int *ip);
 
-char *parse_asm(struct Transpiler *transpiler, int i){
+char *parse_asm(struct Transpiler *transpiler, int i, char *type){
 	char *a = arr_get(transpiler->arr, i).data;
 	char res[500];
+	if (strcmp(type, "i8") == 0 && atoi(a) > 255){
+		error(transpiler, "Data exceeds bounds. Max size of an 8-bit integer is 255.", "SizeError", "i8", i, 0, "<no extr>", "");
+	}else if (strcmp(type, "i16") == 0 && atoi(a) > 65535){
+		error(transpiler, "Data exceeds bounds. Max size of a 16-bit integer is 65,535.", "SizeError", "i16", i, 0, "<no extr>", "");
+	}else if (strcmp(type, "i32") == 0 && (atoi(a) < -2147483648 || atoi(a) > 2147483647)){
+		error(transpiler, "Data exceeds bounds. Max size of a 32-bit integer is 2147483647.", "SizeError", "i32", i, 0, "<no extr>", "");
+	}else if (strcmp(type, "i64") == 0 && (atoi(a) < -9223372036854775808 || atoi(a) > 9223372036854775807)){
+		error(transpiler, "Data exceeds bounds. Max size of a 64-bit integer is 9223372036854775807.", "SizeError", "i64", i, 0, "<no extr>", "");
+	};
 	if (a[0] == '$'){
 		a++;
 		strcpy(res, "$ - ");
 		strcat(res, a);
 		return res;
-	}else if(a[0] == '"'){
+	}else if(a[0] == '"' || a[0] == '\''){
+		if (a[0] == '"') {
 		replaceSubstring(a, "\n", "\", 10, \"");
+		}else{
+		replaceSubstring(a, "\n", "\', 10, \'");
+		}
 		strcpy(res, a);
+		if (a[0] == '"') {
 		strcat(res, "\"");
+		}else{
+		strcat(res, "\'");
+		}
 		return res;
 	};
 	strcpy(res, a);
@@ -1140,7 +1157,7 @@ void transpile(struct Transpiler *transpiler, int *ip){
 					s.type = CONSTANT_METHOD;
 					strcpy(s.bytes, val);
 					arr_push(transpiler->simulation.variables, s);
-					if (arr_get(transpiler->arr, i+2).data[0] == '"'){
+					if (arr_get(transpiler->arr, i+2).data[0] == '"' || arr_get(transpiler->arr, i+2).data[0] == '\''){
 						s.type = CONSTANT_STRING;
 					}else {
 						s.type = CONSTANT_INT;
@@ -1481,15 +1498,15 @@ void transpile(struct Transpiler *transpiler, int *ip){
 		if (strcmp(arr_get(transpiler->arr, i+1).data, ":") == 0){
 			strcat(transpiler->normalCompiler.dataSection, "\t");
 			strcat(transpiler->normalCompiler.dataSection, arr_get(transpiler->arr, i).data);
-			if (arr_get(transpiler->arr, i+2).data[0] == '\"') {
+			if (arr_get(transpiler->arr, i+2).data[0] == '\"' || arr_get(transpiler->arr, i+2).data[0] == '\'') {
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].size = strlen(arr_get(transpiler->arr, i+2).data)-1;
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len++].name = arr_get(transpiler->arr, i).data;
 				strcat(transpiler->normalCompiler.dataSection, ": ");
 			}else {
 				strcat(transpiler->normalCompiler.dataSection, " equ ");
 			}
-			char *parsedRes = parse_asm(transpiler, i+2);
-			if (parsedRes[0] == '\"'){
+			char *parsedRes = parse_asm(transpiler, i+2, "");
+			if (parsedRes[0] == '\"' || parsedRes[0] == '\''){
 				strcat(transpiler->normalCompiler.dataSection, "db ");
 			};
 			strcat(transpiler->normalCompiler.dataSection, " ");
@@ -1544,7 +1561,7 @@ void transpile(struct Transpiler *transpiler, int *ip){
 			}
 			if (strcmp(arr_get(transpiler->arr, i-1).data, "i16") == 0){
 				strcat(transpiler->normalCompiler.dataSection, "dw ");
-				strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, i+2));
+				strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, i+2, "i16"));
 				strcat(transpiler->normalCompiler.dataSection, "\n\t");
 
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].size = 2;
@@ -1552,7 +1569,7 @@ void transpile(struct Transpiler *transpiler, int *ip){
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len++].name = arr_get(transpiler->arr, i).data;
 			}else if (strcmp(arr_get(transpiler->arr, i-1).data, "i32") == 0){
 				strcat(transpiler->normalCompiler.dataSection, "dd ");
-				strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, i+2));
+				strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, i+2, "i32"));
 				strcat(transpiler->normalCompiler.dataSection, "\n\t");
 
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].size = 4;
@@ -1560,7 +1577,7 @@ void transpile(struct Transpiler *transpiler, int *ip){
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len++].name = arr_get(transpiler->arr, i).data;
 			}else if (strcmp(arr_get(transpiler->arr, i-1).data, "i64") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "int") == 0){
 				strcat(transpiler->normalCompiler.dataSection, "dq ");
-				strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, i+2));
+				strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, i+2, "i64"));
 				strcat(transpiler->normalCompiler.dataSection, "\n\t");
 
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].size = 8;
@@ -1568,7 +1585,7 @@ void transpile(struct Transpiler *transpiler, int *ip){
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len++].name = arr_get(transpiler->arr, i).data;
 			}else if (strcmp(arr_get(transpiler->arr, i-1).data, "byte") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "char") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "i8") == 0){
 				strcat(transpiler->normalCompiler.dataSection, "db ");
-				strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, i+2));
+				strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, i+2, "i8"));
 				strcat(transpiler->normalCompiler.dataSection, "\n\t");
 
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].size = 1;
@@ -1599,7 +1616,7 @@ void transpile(struct Transpiler *transpiler, int *ip){
 					strcat(transpiler->normalCompiler.code, "\n\t");
 				}else {
 					if (strcmp(val, "rax") == 0){
-						strcpy(rax, parse_asm(transpiler, i+2));
+						strcpy(rax, parse_asm(transpiler, i+2, ""));
 					};
 					if (strcmp(val, "rax") && strcmp(val, "rbx") && strcmp(val, "rcx") && strcmp(val, "rdx") && strcmp(val, "rsp") && strcmp(val, "rbp") && strcmp(val, "rsi") && strcmp(val, "rdi") && strcmp(val, "r10") && strcmp(val, "r11") && strcmp(val, "r12")){
 						int found = 0;
