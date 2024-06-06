@@ -460,7 +460,6 @@ void error(char *info, char* type, struct Instruction instruction){
 
 
 void help(){
-	printf("-----------------\n");
 	printf("Bytecode EMULATOR:\n");
 	printf("	-h: Prints this manual\n");
 }
@@ -473,6 +472,17 @@ int gettype(char *b){
 
 char *parse(struct Constant cons){
     char *data = cons.bytes;
+    if (strcmp(data, "rax") == 0 || strcmp(data, "rbx") == 0 || strcmp(data, "rcx") == 0 || strcmp(data, "rdx") == 0 || strcmp(data, "rsp") == 0 || strcmp(data, "rbp") == 0 || strcmp(data, "rsi") == 0 || strcmp(data, "rdi") == 0 || strcmp(data, "r10") == 0 || strcmp(data, "r11") == 0 || strcmp(data, "r12") == 0){
+        for (int i=0; i<=registers->len; i+=2){
+            if (strcmp(registers->value[i].bytes, data) == 0){
+                if (registers->value[i].type == CONSTANT_LEN){
+                    sprintf(data, "%d", strlen(parse(registers->value[i])));
+                    return data;
+                };
+                return parse(registers->value[i+1]);
+            };
+        };
+    };
     if (cons.type == CONSTANT_INT){
         return data;
     };
@@ -565,7 +575,7 @@ char *parse(struct Constant cons){
             return parse(constants[i]);
         };
     };
-    for (int i=0; i<=registers_count; i+=2){
+    for (int i=0; i<=registers->len; i+=2){
         if (strcmp(registers->value[i].bytes, data) == 0){
             if (registers->value[i].type == CONSTANT_LEN){
                 sprintf(data, "%d", strlen(parse(registers->value[i])));

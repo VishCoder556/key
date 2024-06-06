@@ -1,6 +1,6 @@
-include "stdio.k"
+include stdio
 
-msg: "Hello World"
+msg: "Hello World\n"
 msglen: $msg
 
 main {

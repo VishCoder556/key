@@ -27,7 +27,8 @@
         "string_view": "c",
         "__locale": "c",
         "cstddef": "c",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "targetconditionals.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

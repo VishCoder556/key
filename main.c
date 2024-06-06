@@ -24,6 +24,13 @@ struct syscall_info {
     const char *description;
 };
 
+
+#ifdef __APPLE__
+    #define PLATFORM "macho64"
+#elif __linux__
+	#define PLATFORM "elf64"
+#endif
+
 struct syscall_info syscall_list[] = {
 	    {0, "sys_read", "Read data from a file descriptor"},
     {1, "sys_write", "Write data to a file descriptor"},
@@ -532,16 +539,21 @@ if (strcmp(arr->value[arr->len-1].data, "") == 0){strcpy(arr->value[arr->len-1].
 				w[1] = '\0'; \
 				if(data[i-1]=='\\'&&isalpha(data[i])){} else{ strcat(res, w); } \
 				if (strcmp(res, "include") == 0){ \
-					char *str = strdup(data) + i + 3;\
+					char *str = strdup(data) + i + 2; \
 					strtok(str, "\""); \
-					FILE *file = fopen(str, "r");\
-					char data1[500];\
-					fread(data1, 1, 500, file);\
-					arr_String *newarr = arr_new(String);\
-					split(newarr, data1);\
-					for (int t=0; t<=newarr->len; t++){;arr_push(arr, arr_get(newarr, t));}\
-					fclose(file);\
-					i++;\
+					strtok(str, "\n"); \
+					if (str[0] == '\"') { \
+						str++; \
+					}else{ char str2[20] = "../libs/"; strcat(str2, strdup(str));strcat(str2, ".k"); str = str2;} \
+					FILE *file = fopen(str, "r"); \
+					if(file == 0){fprintf(stderr, "FILE %s NOT FOUND\n", str);exit(1);} \
+					char data1[700]; \
+					fread(data1, 1, 700, file); \
+					arr_String *newarr = arr_new(String); \
+					split(newarr, data1); \
+					for (int t=0; t<=newarr->len; t++){;arr_push(arr, arr_get(newarr, t));} \
+					fclose(file); \
+					i++; \
 				}; \
 				strncpy(arr->value[arr_size(arr)-1].data, res, 135); 
 
@@ -989,7 +1001,6 @@ char *parse_asm(struct Transpiler *transpiler, int i, char *type, _Bool isArray,
 		return res;
 	};
 	strcpy(res, a);
-	// TODO: GO HERE
 	strcpy(arr_get(transpiler->arr, arr_size(transpiler->arr)).data, res);
 	return res;
 };
@@ -1237,7 +1248,6 @@ char *parse_expr_asm(struct Transpiler *transpiler, int i){
 			return sres;
 		};
 	};
-	;
 	strcat(transpiler->normalCompiler.code, "mov r13, ");
 	strcat(transpiler->normalCompiler.code, arr_get(transpiler->arr, i).data);
 	strcat(transpiler->normalCompiler.code, "\n\t");
@@ -1329,7 +1339,6 @@ void transpile(struct Transpiler *transpiler, int *ip){
 				char *val = arr_get(transpiler->arr, i+1).data;
 				for (int y=0; y<=transpiler->simulation.registers->len-1; y+=2){
 					if (strcmp(val, arr_get(transpiler->simulation.registers, y)) == 0){
-						// printf("{%s}", arr_get(transpiler->arr, i+2).data);
 						if (isalpha(arr_get(transpiler->simulation.registers, y+1)[0])){
 							sprintf(arr_get(transpiler->simulation.registers, y+1), "%s", arr_get(transpiler->simulation.registers, y+1)+atoi(transpile_expr(transpiler, i+2, arr_get(transpiler->arr, i+2).data)));
 						}else if (isalpha(transpile_expr(transpiler, i+2, arr_get(transpiler->arr, i+2).data)[0])){
@@ -1349,7 +1358,6 @@ void transpile(struct Transpiler *transpiler, int *ip){
 				char *val = arr_get(transpiler->arr, i+1).data;
 				for (int y=0; y<=transpiler->simulation.registers->len-1; y+=2){
 					if (strcmp(val, arr_get(transpiler->simulation.registers, y)) == 0){
-						// printf("{%s}", arr_get(transpiler->arr, i+2).data);
 						if (isalpha(arr_get(transpiler->simulation.registers, y+1)[0])){
 							sprintf(arr_get(transpiler->simulation.registers, y+1), "%s", arr_get(transpiler->simulation.registers, y+1)-atoi(transpile_expr(transpiler, i+2, arr_get(transpiler->arr, i+2).data)));
 						}else if (isalpha(transpile_expr(transpiler, i+2, arr_get(transpiler->arr, i+2).data)[0])){
@@ -1806,23 +1814,53 @@ void transpile(struct Transpiler *transpiler, int *ip){
 			}
 
 		}else if(strcmp(arr_get(transpiler->arr, i).data, "syscall") == 0){
-			if (strcmp(rax, "1") == 0){
-					
-				strcat(transpiler->normalCompiler.code, "mov rax, 0x02000004");
+			#ifdef __APPLE__
+				if (strcmp(rax, "1") == 0){
+						
+					strcat(transpiler->normalCompiler.code, "mov rax, 0x02000004");
+					strcat(transpiler->normalCompiler.code, "\n\t");
+				}else if (strcmp(rax, "60") == 0){
+						;
+					strcat(transpiler->normalCompiler.code, "mov rax, 0x02000001");
+					strcat(transpiler->normalCompiler.code, "\n\t");
+				}else if (strcmp(rax, "2") == 0){
+						;
+					strcat(transpiler->normalCompiler.code, "mov rax, 0x2000005");
+					strcat(transpiler->normalCompiler.code, "\n\t");
+				}else if (strcmp(rax, "3") == 0){
+						;
+					strcat(transpiler->normalCompiler.code, "mov rax, 0x2000006");
+					strcat(transpiler->normalCompiler.code, "\n\t");
+				}else{
+					char err[500];
+
+							int global = 0;
+							for (int i=0; i<=transpiler->arr->len-1; i++){
+								if ((strcmp(arr_get(transpiler->arr, i+1).data, "=") == 0 || strcmp(arr_get(transpiler->arr, i+2).data, "=") == 0) && strcmp(arr_get(transpiler->arr, i).data, "rax") == 0){
+									global = i;
+									if(strcmp(arr_get(transpiler->arr, i+2).data, "=") == 0){
+										global++;
+									};
+								};
+							};
+					int found = 0;
+					for(int i=0; i<=sizeof(syscall_list)/sizeof(syscall_list[0]); i++){
+						if (syscall_list[i].number == atoi(rax)){
+							found = 1;
+						};
+					};
+					if (found == 0) {
+						sprintf(err, "Syscall number %d does not exist", atoi(rax));
+					}else if (found == 1) {
+						sprintf(err, "Syscall number %d is not implemented", atoi(rax));
+					}
+					error(transpiler, err, "SyscallError", "syscall", i, global+2, "invalid syscall number was set here", "");;
+				};
+			#elif __linux__
+				strcat(transpiler->normalCompiler.code, "mov rax, ");
+				strcat(transpiler->normalCompiler.code, rax);
 				strcat(transpiler->normalCompiler.code, "\n\t");
-			}else if (strcmp(rax, "60") == 0){
-					;
-				strcat(transpiler->normalCompiler.code, "mov rax, 0x02000001");
-				strcat(transpiler->normalCompiler.code, "\n\t");
-			}else if (strcmp(rax, "2") == 0){
-					;
-				strcat(transpiler->normalCompiler.code, "mov rax, 0x2000005");
-				strcat(transpiler->normalCompiler.code, "\n\t");
-			}else if (strcmp(rax, "3") == 0){
-					;
-				strcat(transpiler->normalCompiler.code, "mov rax, 0x2000006");
-				strcat(transpiler->normalCompiler.code, "\n\t");
-			};
+			#endif
 				
 			strcat(transpiler->normalCompiler.code, "syscall");
 			strcat(transpiler->normalCompiler.code, "\n\t");
@@ -2050,7 +2088,7 @@ void run_transpiler(struct Transpiler *transpiler){
 	   fclose(f);
 
 		char res[500];
-		sprintf(res, "nasm -f macho64 %s -o main.o", transpiler->output_file);
+		sprintf(res, "nasm -f %s %s -o main.o", PLATFORM, transpiler->output_file);
 		system(res);
 		if (flag != FLAG_ASSEMBLY) {
 			if (statn == -1)  {
@@ -2088,7 +2126,20 @@ void run_transpiler(struct Transpiler *transpiler){
 			system("rm main.o");
 			exit(0);
 		};
-		system("ld -macosx_version_min 10.13 -o main main.o -static");
+		char temp[10];
+		if (!(transpiler->output_file[strlen(transpiler->output_file)-1] == 's' && transpiler->output_file[strlen(transpiler->output_file)-2] == '.')) {
+			sprintf(temp, transpiler->output_file);
+		}else {
+			snprintf(temp, strlen(transpiler->output_file)-1, transpiler->output_file);
+		}
+		char *add = "";
+		#ifdef __APPLE__
+			add = "-macosx_version_min";
+		#elif __linux__
+			add = "-m elf_i386";
+		#endif;
+		sprintf(res, "ld %s 10.13 -o %s main.o -static", add, temp);
+		system(res);
 
 		if (statn2 == -1){
 
