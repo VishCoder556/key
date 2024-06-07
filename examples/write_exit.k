@@ -1,4 +1,4 @@
-include stdio
+include "../libs/stdio.k"
 
 msg: "Hello World"
 msglen: $msg

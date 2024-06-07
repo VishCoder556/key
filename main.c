@@ -1934,6 +1934,41 @@ void transpile(struct Transpiler *transpiler, int *ip){
 			strcat(transpiler->normalCompiler.code, ", ");
 			strcat(transpiler->normalCompiler.code, arr_get(transpiler->arr, i+2).data);
 			strcat(transpiler->normalCompiler.code, "\n\t");
+		}else if(strcmp(arr_get(transpiler->arr, i).data, "mul") == 0){
+			char *a = arr_get(transpiler->arr, i+2).data;
+			char *b = parse_expr_asm(transpiler, i+1);
+			strcat(transpiler->normalCompiler.code, "mov rax, ");
+			strcat(transpiler->normalCompiler.code, arr_get(transpiler->arr, i+2).data);
+			strcat(transpiler->normalCompiler.code, "\n\tmul ");
+			if (strcmp(arr_get(transpiler->arr, i+1).data, "rax") == 0){
+				char d[500];
+				sprintf(d, "%d", atoi(rax)+atoi(a));
+				strcpy(rax, d);
+			};
+			strcat(transpiler->normalCompiler.code, b);
+			strcat(transpiler->normalCompiler.code, "\n\tmov ");
+			strcat(transpiler->normalCompiler.code, b);
+			strcat(transpiler->normalCompiler.code, ", rax\n\t");
+		}else if(strcmp(arr_get(transpiler->arr, i).data, "div") == 0){
+			char *a = arr_get(transpiler->arr, i+2).data;
+			char *b = parse_expr_asm(transpiler, i+1);
+			strcat(transpiler->normalCompiler.code, "mov dx, 0\n\t");
+			strcat(transpiler->normalCompiler.code, "mov rax, ");
+			strcat(transpiler->normalCompiler.code, b);
+			strcat(transpiler->normalCompiler.code, "\n\tmov ");
+			strcat(transpiler->normalCompiler.code, b);
+			strcat(transpiler->normalCompiler.code, ", ");
+			strcat(transpiler->normalCompiler.code, arr_get(transpiler->arr, i+2).data);
+			strcat(transpiler->normalCompiler.code, "\n\tidiv ");
+			if (strcmp(arr_get(transpiler->arr, i+1).data, "rax") == 0){
+				char d[500];
+				sprintf(d, "%d", atoi(rax)+atoi(a));
+				strcpy(rax, d);
+			};
+			strcat(transpiler->normalCompiler.code, b);
+			strcat(transpiler->normalCompiler.code, "\n\tmovzx ");
+			strcat(transpiler->normalCompiler.code, b);
+			strcat(transpiler->normalCompiler.code, ", al\n\t");
 		}else if(strcmp(arr_get(transpiler->arr, i).data, "if") == 0){
 			inIfStatement = true;
 			char *a = parse_expr_asm(transpiler, i+1);
