@@ -1,0 +1,61 @@
+            char *a = arr_get(transpiler->arr, i+2).data;
+			char *b = parse_expr_asm(transpiler, i+1);
+			strcat(transpiler->normalCompiler.code, "mov dx, 0\n\t");
+			strcat(transpiler->normalCompiler.code, "mov rax, ");
+			strcat(transpiler->normalCompiler.code, b);
+			strcat(transpiler->normalCompiler.code, "\n\tmov ");
+			strcat(transpiler->normalCompiler.code, b);
+			strcat(transpiler->normalCompiler.code, ", ");
+			strcat(transpiler->normalCompiler.code, arr_get(transpiler->arr, i+2).data);
+			strcat(transpiler->normalCompiler.code, "\n\tidiv ");
+			if (strcmp(arr_get(transpiler->arr, i+1).data, "rax") == 0){
+				char d[500];
+				sprintf(d, "%d", atoi(rax)+atoi(a));
+				strcpy(rax, d);
+			};
+			strcat(transpiler->normalCompiler.code, b);
+			strcat(transpiler->normalCompiler.code, "\n\tmovzx ");
+			strcat(transpiler->normalCompiler.code, b);
+			strcat(transpiler->normalCompiler.code, ", al\n\t");
+
+
+
+
+
+
+
+
+			char *a = arr_get(transpiler->arr, i+2).data;
+			char *b = parse_expr_asm(transpiler, i+1);
+			bool isVariable = false;
+			strcat(transpiler->normalCompiler.code, "mov dx, 0\n\t");
+			strcat(transpiler->normalCompiler.code, "mov rax, ");
+			strcat(transpiler->normalCompiler.code, arr_get(transpiler->arr, i+2).data);
+			strcat(transpiler->normalCompiler.code, "\n\tmov r14, ");
+			strcat(transpiler->normalCompiler.code, b);
+			strcat(transpiler->normalCompiler.code, "\n\tmov r14, ");
+			for (int j=0; j<=transpiler->normalCompiler.constants->len-1; j++){
+				if (arr_get(transpiler->normalCompiler.constants, j).type != 0 && strcmp(arr_get(transpiler->normalCompiler.constants, j).name, b) == 0){
+					isVariable = true;
+					strcat(transpiler->normalCompiler.code, "qword [");
+				};
+			}
+			strcat(transpiler->normalCompiler.code, "r14");
+			if(isVariable){strcat(transpiler->normalCompiler.code, "]");}
+			strcat(transpiler->normalCompiler.code, "\n\timul ");
+			if (strcmp(arr_get(transpiler->arr, i+1).data, "rax") == 0){
+				char d[500];
+				sprintf(d, "%d", atoi(rax)+atoi(a));
+				strcpy(rax, d);
+			};
+			strcat(transpiler->normalCompiler.code, "r14");
+			strcat(transpiler->normalCompiler.code, ", [rsp]");
+			strcat(transpiler->normalCompiler.code, "\n\tmov r13, r14");
+			strcat(transpiler->normalCompiler.code, "\n\tpop r14\n\tmov r14, ");
+			strcat(transpiler->normalCompiler.code, b);
+			strcat(transpiler->normalCompiler.code, "\n\tmov ");
+			if(isVariable){strcat(transpiler->normalCompiler.code, "qword [");}
+			strcat(transpiler->normalCompiler.code, "r14");
+			if(isVariable){strcat(transpiler->normalCompiler.code, "]");}
+			strcat(transpiler->normalCompiler.code, ", r13");
+			strcat(transpiler->normalCompiler.code, "\n\tmov r14, __w\n\t");

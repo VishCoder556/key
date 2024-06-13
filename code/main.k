@@ -1,16 +1,14 @@
-include stdio
+include "../libs/stdio.k"
 
 msg: "Hello World"
 msglen: $msg
+
+struct
 
 main {
     rdi = msg
     rsi = msglen
     call print
-    rdi = 2
-    inc rdi
-    mul rdi, 4
-    div rdi, 2
-    div rdi, 3
+    rdi = 5
     call exit
 }

@@ -28,7 +28,8 @@
         "__locale": "c",
         "cstddef": "c",
         "stdbool.h": "c",
-        "targetconditionals.h": "c"
+        "targetconditionals.h": "c",
+        "temp2": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

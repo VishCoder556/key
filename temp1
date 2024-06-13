@@ -1,0 +1,89 @@
+#include <stdio.h>
+#include <stdint.h>
+
+int main() {
+    uint16_t __w = 0;
+    char newline[] = "\n";
+    char msg[] = "Hello World";
+    size_t msglen = sizeof(msg) - 1;
+    int64_t a = 4;
+
+    fprintf(stdout, "%s", msg);
+    fprintf(stdout, "%s", newline);
+
+    a = 2;
+    a /= 2;
+    __w = (uint16_t)a;
+
+    fprintf(stdout, "%ld\n", a);
+
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#include <stdio.h>
+#include <stdlib.h>
+
+int __w = 0;
+char newline[] = "\n";
+char msg[] = "Hello World";
+int msglen = sizeof(msg) - 1;
+long long a = 4;
+
+int exit() {
+    syscall(60, 0);
+    return 0;
+}
+
+int fprintf() {
+    syscall(0x02000004, 1, 0, 0);
+    return 0;
+}
+
+int write() {
+    syscall(0x02000004, 1, 0, 0);
+    return 0;
+}
+
+int print(char* rsi, long long rsi) {
+    write(1, rsi, rsi);
+    write(1, newline, 1);
+    return 0;
+}
+
+int open() {
+    syscall(0x2000005, 2, 0, 0);
+    return 0;
+}
+
+int close() {
+    syscall(0x2000006, 3, 0, 0);
+    return 0;
+}
+
+int main() {
+    a = 2;
+    a /= a;
+    a = (unsigned char)a;
+    __w = a;
+    a = a;
+    a = a;
+    a = a;
+    exit(*(long long*)&a);
+    syscall(0x02000001, 0);
+    return 0;
+}
+

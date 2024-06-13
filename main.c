@@ -469,6 +469,7 @@ new_arrtype(constant);
 
 struct AssemblyTranspiler {
 	char dataSection[1000];
+	char globals[100];
 	char code[9000];
 	int stack_size;
 	arr_variable *variables;
@@ -1354,6 +1355,44 @@ void transpile(struct Transpiler *transpiler, int *ip){
 						}
 					};
 				};
+			}else if (strcmp(arr_get(transpiler->arr, i).data, "mul") == 0){
+				char *val = arr_get(transpiler->arr, i+1).data;
+				for (int y=0; y<=transpiler->simulation.registers->len-1; y+=2){
+					if (strcmp(val, arr_get(transpiler->simulation.registers, y)) == 0){
+						if (isalpha(arr_get(transpiler->simulation.registers, y+1)[0])){
+							sprintf(arr_get(transpiler->simulation.registers, y+1), "%s", arr_get(transpiler->simulation.registers, y+1)+atoi(transpile_expr(transpiler, i+2, arr_get(transpiler->arr, i+2).data)));
+						}else if (isalpha(transpile_expr(transpiler, i+2, arr_get(transpiler->arr, i+2).data)[0])){
+							int global = 0;
+							for (int i=0; i<=transpiler->arr->len-1; i++){
+								if ((strcmp(arr_get(transpiler->arr, i+1).data, "=") == 0 || strcmp(arr_get(transpiler->arr, i+2).data, "=") == 0) && strcmp(arr_get(transpiler->arr, i).data, arr_get(transpiler->simulation.registers, y)) == 0){
+									global = i;
+								};
+							};
+							error(transpiler, "Cannot add by string while in Simulation mode. That feature only works in Bytecode mode", "IncrementByStringError", arr_get(transpiler->simulation.registers, y+1), i+2, global+2, "The types of the two do not match as you can see", "");
+						}else {
+							sprintf(arr_get(transpiler->simulation.registers, y+1), "%d", atoi(arr_get(transpiler->simulation.registers, y+1))*atoi(transpile_expr(transpiler, i+2, arr_get(transpiler->arr, i+2).data)));
+						}
+					};
+				};
+			}else if (strcmp(arr_get(transpiler->arr, i).data, "div") == 0){
+				char *val = arr_get(transpiler->arr, i+1).data;
+				for (int y=0; y<=transpiler->simulation.registers->len-1; y+=2){
+					if (strcmp(val, arr_get(transpiler->simulation.registers, y)) == 0){
+						if (isalpha(arr_get(transpiler->simulation.registers, y+1)[0])){
+							sprintf(arr_get(transpiler->simulation.registers, y+1), "%s", arr_get(transpiler->simulation.registers, y+1)+atoi(transpile_expr(transpiler, i+2, arr_get(transpiler->arr, i+2).data)));
+						}else if (isalpha(transpile_expr(transpiler, i+2, arr_get(transpiler->arr, i+2).data)[0])){
+							int global = 0;
+							for (int i=0; i<=transpiler->arr->len-1; i++){
+								if ((strcmp(arr_get(transpiler->arr, i+1).data, "=") == 0 || strcmp(arr_get(transpiler->arr, i+2).data, "=") == 0) && strcmp(arr_get(transpiler->arr, i).data, arr_get(transpiler->simulation.registers, y)) == 0){
+									global = i;
+								};
+							};
+							error(transpiler, "Cannot add by string while in Simulation mode. That feature only works in Bytecode mode", "IncrementByStringError", arr_get(transpiler->simulation.registers, y+1), i+2, global+2, "The types of the two do not match as you can see", "");
+						}else {
+							sprintf(arr_get(transpiler->simulation.registers, y+1), "%d", atoi(arr_get(transpiler->simulation.registers, y+1))/atoi(transpile_expr(transpiler, i+2, arr_get(transpiler->arr, i+2).data)));
+						}
+					};
+				};
 			}else if (strcmp(arr_get(transpiler->arr, i).data, "sub") == 0){
 				char *val = arr_get(transpiler->arr, i+1).data;
 				for (int y=0; y<=transpiler->simulation.registers->len-1; y+=2){
@@ -1704,28 +1743,28 @@ void transpile(struct Transpiler *transpiler, int *ip){
 				};
 			}
 			if (strcmp(arr_get(transpiler->arr, i-1).data, "i16") == 0){
-				if (!isArray){strcat(transpiler->normalCompiler.dataSection, " equ ");}else {strcat(transpiler->normalCompiler.dataSection, " ");}
+				if (!isArray){strcat(transpiler->normalCompiler.dataSection, " dw ");}else {strcat(transpiler->normalCompiler.dataSection, " ");}
 				strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, vardefi, "i16", isArray, arr_get(transpiler->arr, namedefi).data));
 				strcat(transpiler->normalCompiler.dataSection, "\n\t");
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].size = 1;
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].type = arr_get(transpiler->arr, i-1).data;
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len++].name = arr_get(transpiler->arr, namedefi).data;
 			}else if (strcmp(arr_get(transpiler->arr, i-1).data, "i32") == 0){
-				if (!isArray){strcat(transpiler->normalCompiler.dataSection, " equ ");}else {strcat(transpiler->normalCompiler.dataSection, " ");}
+				if (!isArray){strcat(transpiler->normalCompiler.dataSection, " dd ");}else {strcat(transpiler->normalCompiler.dataSection, " ");}
 				strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, vardefi, "i32", isArray, arr_get(transpiler->arr, namedefi).data));
 				strcat(transpiler->normalCompiler.dataSection, "\n\t");
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].size = 1;
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].type = arr_get(transpiler->arr, i-1).data;
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len++].name = arr_get(transpiler->arr, namedefi).data;
 			}else if (strcmp(arr_get(transpiler->arr, i-1).data, "i64") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "int") == 0){
-				if (!isArray){strcat(transpiler->normalCompiler.dataSection, " equ ");}else {strcat(transpiler->normalCompiler.dataSection, " ");}
+				if (!isArray){strcat(transpiler->normalCompiler.dataSection, " dq ");}else {strcat(transpiler->normalCompiler.dataSection, " ");}
 				strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, vardefi, "i64", isArray, arr_get(transpiler->arr, namedefi).data));
 				strcat(transpiler->normalCompiler.dataSection, "\n\t");
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].size = 1;
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].type = arr_get(transpiler->arr, i-1).data;
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len++].name = arr_get(transpiler->arr, namedefi).data;
 			}else if (strcmp(arr_get(transpiler->arr, i-1).data, "byte") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "char") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "i8") == 0){
-				if (!isArray){strcat(transpiler->normalCompiler.dataSection, " equ ");}else {strcat(transpiler->normalCompiler.dataSection, " ");}
+				if (!isArray){strcat(transpiler->normalCompiler.dataSection, " db ");}else {strcat(transpiler->normalCompiler.dataSection, " ");}
 				strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, vardefi, "i8", isArray, arr_get(transpiler->arr, namedefi).data));
 				strcat(transpiler->normalCompiler.dataSection, "\n\t");
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].size = 1;
@@ -1793,13 +1832,18 @@ void transpile(struct Transpiler *transpiler, int *ip){
 							strcat(transpiler->normalCompiler.code, "\n\t");
 						}
 					}else {
-						char *a = parse_expr_asm(transpiler, i+2);
+						char *a = arr_get(transpiler->arr, i+2).data;
 						int found = 0;
 						for (int j=0; j<=transpiler->normalCompiler.constants->len-1; j++){
-							if (strcmp(arr_get(transpiler->arr, i+2).data, arr_get(transpiler->normalCompiler.constants, j).name) == 0){
-								found = 1;
+							if (strcmp(parse_expr_asm(transpiler, i+2), arr_get(transpiler->normalCompiler.constants, j).name) == 0){
+								found = j;
 							};
 						};
+						if (arr_get(transpiler->normalCompiler.constants, found).type != 0) {
+							strcat(transpiler->normalCompiler.code, "mov r14, ");
+							strcat(transpiler->normalCompiler.code, a);
+							strcat(transpiler->normalCompiler.code, "\n\t");
+						}
 							if (strcmp(arr_get(transpiler->arr, i+2).data, "&") == 0){
 								strcat(transpiler->normalCompiler.code, "lea ");
 							}else {
@@ -1807,7 +1851,13 @@ void transpile(struct Transpiler *transpiler, int *ip){
 							}
 						strcat(transpiler->normalCompiler.code, val);
 						strcat(transpiler->normalCompiler.code, ", ");
-						strcat(transpiler->normalCompiler.code, a);
+						if (arr_get(transpiler->normalCompiler.constants, found).type != 0) {
+						strcat(transpiler->normalCompiler.code, "qword [");
+						strcat(transpiler->normalCompiler.code, "r14");
+						strcat(transpiler->normalCompiler.code, "]");
+						}else{
+							strcat(transpiler->normalCompiler.code, a);
+						}
 						strcat(transpiler->normalCompiler.code, "\n\t");
 					}
 				}
@@ -1936,27 +1986,60 @@ void transpile(struct Transpiler *transpiler, int *ip){
 			strcat(transpiler->normalCompiler.code, "\n\t");
 		}else if(strcmp(arr_get(transpiler->arr, i).data, "mul") == 0){
 			char *a = arr_get(transpiler->arr, i+2).data;
-			char *b = parse_expr_asm(transpiler, i+1);
-			strcat(transpiler->normalCompiler.code, "mov rax, ");
+			char *b = parse_expr_asm(transpiler->arr, i+1);
+			bool isVariable = false;
+			strcat(transpiler->normalCompiler.code, "push ");
 			strcat(transpiler->normalCompiler.code, arr_get(transpiler->arr, i+2).data);
-			strcat(transpiler->normalCompiler.code, "\n\tmul ");
+			strcat(transpiler->normalCompiler.code, "\n\tmov r14, ");
+			strcat(transpiler->normalCompiler.code, b);
+			strcat(transpiler->normalCompiler.code, "\n\tmov r14, ");
+			for (int j=0; j<=transpiler->normalCompiler.constants->len-1; j++){
+				if (arr_get(transpiler->normalCompiler.constants, j).type != 0 && strcmp(arr_get(transpiler->normalCompiler.constants, j).name, b) == 0){
+					isVariable = true;
+					strcat(transpiler->normalCompiler.code, "qword [");
+				};
+			}
+			strcat(transpiler->normalCompiler.code, "r14");
+			if(isVariable){strcat(transpiler->normalCompiler.code, "]");}
+			strcat(transpiler->normalCompiler.code, "\n\timul ");
 			if (strcmp(arr_get(transpiler->arr, i+1).data, "rax") == 0){
 				char d[500];
 				sprintf(d, "%d", atoi(rax)+atoi(a));
 				strcpy(rax, d);
 			};
+			strcat(transpiler->normalCompiler.code, "r14");
+			strcat(transpiler->normalCompiler.code, ", [rsp]");
+			strcat(transpiler->normalCompiler.code, "\n\tmov r13, r14");
+			strcat(transpiler->normalCompiler.code, "\n\tpop r14\n\tmov r14, ");
 			strcat(transpiler->normalCompiler.code, b);
 			strcat(transpiler->normalCompiler.code, "\n\tmov ");
-			strcat(transpiler->normalCompiler.code, b);
-			strcat(transpiler->normalCompiler.code, ", rax\n\t");
+			if(isVariable){strcat(transpiler->normalCompiler.code, "qword [");}
+			strcat(transpiler->normalCompiler.code, "r14");
+			if(isVariable){strcat(transpiler->normalCompiler.code, "]");}
+			strcat(transpiler->normalCompiler.code, ", r13");
+			strcat(transpiler->normalCompiler.code, "\n\tmov r14, __w\n\t");
 		}else if(strcmp(arr_get(transpiler->arr, i).data, "div") == 0){
 			char *a = arr_get(transpiler->arr, i+2).data;
 			char *b = parse_expr_asm(transpiler, i+1);
+			bool isVariable = false;
+			for (int j=0; j<=transpiler->normalCompiler.constants->len-1; j++){
+				if (arr_get(transpiler->normalCompiler.constants, j).type != 0 && strcmp(arr_get(transpiler->normalCompiler.constants, j).name, b) == 0){
+					isVariable = true;
+				};
+			}
 			strcat(transpiler->normalCompiler.code, "mov dx, 0\n\t");
-			strcat(transpiler->normalCompiler.code, "mov rax, ");
+			if (isVariable){
+				strcat(transpiler->normalCompiler.code, "mov r14, ");
+				strcat(transpiler->normalCompiler.code, b);
+				strcat(transpiler->normalCompiler.code, "\n\t");
+			}
+			strcat(transpiler->normalCompiler.code, "mov ");
+			if (isVariable){strcat(transpiler->normalCompiler.code, "qword [");
+			strcat(transpiler->normalCompiler.code, "r14");
+			strcat(transpiler->normalCompiler.code, "]");
+			}else{
 			strcat(transpiler->normalCompiler.code, b);
-			strcat(transpiler->normalCompiler.code, "\n\tmov ");
-			strcat(transpiler->normalCompiler.code, b);
+			}
 			strcat(transpiler->normalCompiler.code, ", ");
 			strcat(transpiler->normalCompiler.code, arr_get(transpiler->arr, i+2).data);
 			strcat(transpiler->normalCompiler.code, "\n\tidiv ");
@@ -1965,10 +2048,13 @@ void transpile(struct Transpiler *transpiler, int *ip){
 				sprintf(d, "%d", atoi(rax)+atoi(a));
 				strcpy(rax, d);
 			};
-			strcat(transpiler->normalCompiler.code, b);
-			strcat(transpiler->normalCompiler.code, "\n\tmovzx ");
-			strcat(transpiler->normalCompiler.code, b);
-			strcat(transpiler->normalCompiler.code, ", al\n\t");
+			if (isVariable){strcat(transpiler->normalCompiler.code, "qword [");};
+			strcat(transpiler->normalCompiler.code, "r14");
+			if (isVariable){strcat(transpiler->normalCompiler.code, "]");};
+			strcat(transpiler->normalCompiler.code, "\n\tmovzx r13, al\n\t");
+			strcat(transpiler->normalCompiler.code, "mov qword [r14], r13\n\tmov r14, __w\n\t");
+		}else if(strcmp(arr_get(transpiler->arr, i).data, "struct")){
+			strcat(transpiler->normalCompiler.globals, "struc endstruc\n");
 		}else if(strcmp(arr_get(transpiler->arr, i).data, "if") == 0){
 			inIfStatement = true;
 			char *a = parse_expr_asm(transpiler, i+1);
@@ -2052,6 +2138,7 @@ void run_transpiler(struct Transpiler *transpiler){
 		fwrite(&transpiler->personalByteCode.instruction_pool, sizeof(struct Instruction), transpiler->personalByteCode.instruction_count, f);
 	   fclose(f);
 	}else if(transpiler->status == Normal){
+		strcpy(transpiler->normalCompiler.globals, "\n");
 		transpiler->normalCompiler.variables = arr_new(variable);
 		transpiler->normalCompiler.constants = arr_new(constant);
 		transpiler->normalCompiler.stack_size = 0;
@@ -2112,7 +2199,7 @@ void run_transpiler(struct Transpiler *transpiler){
 		for (int i=0; i<=transpiler->arr->len; i++){
 			transpile(transpiler, &i);
 		};
-
+	   fwrite(transpiler->normalCompiler.globals, sizeof(char), strlen(transpiler->normalCompiler.globals), f);
 		str = "section .data\n";
 	   fwrite(str, sizeof(char), strlen(str), f);
 	   fwrite(transpiler->normalCompiler.dataSection, sizeof(char), strlen(transpiler->normalCompiler.dataSection), f);
