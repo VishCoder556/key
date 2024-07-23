@@ -27,8 +27,10 @@ struct syscall_info {
 
 #ifdef __APPLE__
     #define PLATFORM "macho64"
+	#define MACOS
 #elif __linux__
 	#define PLATFORM "elf64"
+	#define LINUX
 #endif
 
 struct syscall_info syscall_list[] = {
@@ -1040,12 +1042,6 @@ char *parse_expr_asm(struct Transpiler *transpiler, int i){
 		sprintf(res, "[r13 + %d]", resN);
 		return res;
 	}
-	if(isalpha(arr_get(transpiler->arr, i).data[0])){
-		if(arr_get(transpiler->arr, i).data[0] != 'r'){
-			strcat(transpiler->normalCompiler.code, "mov r13, ");strcat(transpiler->normalCompiler.code, arr_get(transpiler->arr, i).data);strcat(transpiler->normalCompiler.code, "\n\t");
-		}
-		return arr_get(transpiler->arr, i).data;
-	};
 	if(strcmp(arr_get(transpiler->arr, i).data, "(") == 0){
 		return transpile_expr(transpiler, i+1, arr_get(transpiler->arr, i+1).data);
 	}
@@ -1107,7 +1103,7 @@ char *parse_expr_asm(struct Transpiler *transpiler, int i){
 			strcat(transpiler->normalCompiler.code, "cmp r14, r15\n\t");
 				
 			if (!inIfStatement) {
-			strcat(transpiler->normalCompiler.code, "setge    al\n\tmovzx r13, al\n\t");
+			strcat(transpiler->normalCompiler.code, "setl    al\n\tmovzx r13, al\n\t");
 			}else {
 				unsigned int __scope = 0;
 				int k = i;
@@ -1116,7 +1112,7 @@ char *parse_expr_asm(struct Transpiler *transpiler, int i){
 					else if (strcmp(arr_get(transpiler->arr, k).data, "}") == 0){__scope--;if(__scope == 0){break;}};
 				};
 				char res1[100];sprintf(res1, "%d", k);
-				strcat(transpiler->normalCompiler.code, "jl end_");
+				strcat(transpiler->normalCompiler.code, "jg end_");
 				strcat(transpiler->normalCompiler.code, res1);
 				strcat(transpiler->normalCompiler.code, "\n\t");
 			}
@@ -1216,6 +1212,12 @@ char *parse_expr_asm(struct Transpiler *transpiler, int i){
 			strcat(transpiler->normalCompiler.code, "mov r14, __w\n\t");
 			return "r13";
 	};
+	if(isalpha(arr_get(transpiler->arr, i).data[0])){
+		if(arr_get(transpiler->arr, i).data[0] != 'r'){
+			strcat(transpiler->normalCompiler.code, "mov r13, ");strcat(transpiler->normalCompiler.code, arr_get(transpiler->arr, i).data);strcat(transpiler->normalCompiler.code, "\n\t");
+		}
+		return arr_get(transpiler->arr, i).data;
+	};
 	for (int j=0; j<=transpiler->normalCompiler.stack_size-1; j++){
 		if (strcmp(arr_get(transpiler->arr, i).data, arr_get(transpiler->normalCompiler.variables, j).name) == 0){
 			char res[50];
@@ -1302,7 +1304,7 @@ void transpile(struct Transpiler *transpiler, int *ip){
 			}else if(strcmp(arr_get(transpiler->arr, i).data, "if") == 0){
 				alreadyWentThrough = false;
 				inIfStatement = true;
-				char *a = transpile_expr(transpiler, i+1, arr_get(transpiler->arr, i+1).data);
+				char *a = transpile_expr(transpiler, i+1, parse_expr_asm(transpiler, i+1));
 				if (strcmp(a, "0") == 0){
 					unsigned int orgScope = scope;
 					int k = i;
@@ -1986,7 +1988,7 @@ void transpile(struct Transpiler *transpiler, int *ip){
 			strcat(transpiler->normalCompiler.code, "\n\t");
 		}else if(strcmp(arr_get(transpiler->arr, i).data, "mul") == 0){
 			char *a = arr_get(transpiler->arr, i+2).data;
-			char *b = parse_expr_asm(transpiler->arr, i+1);
+			char *b = parse_expr_asm(transpiler, i+1);
 			bool isVariable = false;
 			strcat(transpiler->normalCompiler.code, "push ");
 			strcat(transpiler->normalCompiler.code, arr_get(transpiler->arr, i+2).data);
@@ -2053,13 +2055,14 @@ void transpile(struct Transpiler *transpiler, int *ip){
 			if (isVariable){strcat(transpiler->normalCompiler.code, "]");};
 			strcat(transpiler->normalCompiler.code, "\n\tmovzx r13, al\n\t");
 			strcat(transpiler->normalCompiler.code, "mov qword [r14], r13\n\tmov r14, __w\n\t");
-		}else if(strcmp(arr_get(transpiler->arr, i).data, "struct")){
-			strcat(transpiler->normalCompiler.globals, "struc endstruc\n");
 		}else if(strcmp(arr_get(transpiler->arr, i).data, "if") == 0){
 			inIfStatement = true;
 			char *a = parse_expr_asm(transpiler, i+1);
-				
+			if (!(isdigit(a[0]))) {
+			strcat(transpiler->normalCompiler.code, "cmp ");
+			}else {
 			strcat(transpiler->normalCompiler.code, "test ");
+			}
 			strcat(transpiler->normalCompiler.code, a);
 			strcat(transpiler->normalCompiler.code, ", ");
 			strcat(transpiler->normalCompiler.code, a);
