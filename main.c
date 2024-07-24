@@ -467,7 +467,15 @@ typedef struct constant{
 	char *type;
 }constant;
 
+
 new_arrtype(constant);
+
+
+typedef struct Structure{
+	char *name;
+	arr_constant *members;
+}Structure;
+new_arrtype(Structure);
 
 struct AssemblyTranspiler {
 	char dataSection[1000];
@@ -476,7 +484,11 @@ struct AssemblyTranspiler {
 	int stack_size;
 	arr_variable *variables;
 	arr_constant *constants;
+	arr_Structure *structures;
+	bool inFunction;
 };
+
+
 new_arrtype(Constant);
 
 struct Simulate {
@@ -599,6 +611,8 @@ void split(arr_String *arr, char data[300]){
 		}
 		else if(data[i] == ':'){
 			create_token(":");
+		}else if(data[i] == '.'){
+			create_token(".");
 		}else if(data[i] == '>'){
 			create_token(">");
 		}else if(data[i] == '&'){
@@ -927,7 +941,7 @@ void error(struct Transpiler *transpiler, char *info, char* type, char* i, int t
 
 void transpile(struct Transpiler *transpiler, int *ip);
 char *parse_expr_asm(struct Transpiler *transpiler, int i);
-char *parse_asm(struct Transpiler *transpiler, int i, char *type, _Bool isArray, char *varname);
+char *parse_asm(struct Transpiler *transpiler, int i, char *type, _Bool isArray, char *varname, int *extra);
 
 #define checkIfBounds(X, bounds) isdigit(X[0]) ? atoi(X) < bounds : 5000
 
@@ -943,7 +957,15 @@ void type_check(struct Transpiler *transpiler, int i, char *type, char *a){
 	};
 };
 
-char *parse_asm(struct Transpiler *transpiler, int i, char *type, _Bool isArray, char *varname){
+char *parse_asm(struct Transpiler *transpiler, int i, char *type, _Bool isArray, char *varname, int *extra){
+	if (strcmp(arr_get(transpiler->arr, i).data, "mem") == 0){
+		char data[100];
+		strcpy(data, "resb ");
+		strcat(data, arr_get(transpiler->arr, i+1).data);
+		strcat(data, " ");
+		*extra = atoi(arr_get(transpiler->arr, i+1).data);
+		return strdup(data);
+	};
 	if(strcmp(arr_get(transpiler->arr, i).data, "[") == 0){
 		i++;
 		char data[500];
@@ -1015,6 +1037,68 @@ unsigned int scope = 0;
 
 
 char *parse_expr_asm(struct Transpiler *transpiler, int i){
+	if (strcmp(arr_get(transpiler->arr, i+1).data, ".") == 0 && strcmp(arr_get(transpiler->arr, i+3).data, "=")){
+		char *memberBeingSet = arr_get(transpiler->arr, i+2).data;
+		char *instance = arr_get(transpiler->arr, i).data;
+		char *class;
+		int memberSize = 0;
+			int jkResult = 0;
+			bool found = false;
+			for (int jk=0; jk<=transpiler->normalCompiler.constants->len-1; jk++){
+				if (strcmp(arr_get(transpiler->normalCompiler.constants, jk).name, arr_get(transpiler->arr, i).data) == 0){
+					jkResult = jk;
+					found = true;
+					break;
+				};
+			};
+			class = arr_get(transpiler->normalCompiler.constants, jkResult).type;
+			int size;
+			if (found == true){
+				for (int kl=0; kl<=transpiler->normalCompiler.structures->len-1; kl++){
+					if (strcmp(arr_get(transpiler->normalCompiler.structures, kl).name, class) == 0){
+						size = 0;
+						for (int jl=0; jl<= arr_get(transpiler->normalCompiler.structures, kl).members->len - 1; jl++){
+							if (strcmp(arr_get(arr_get(transpiler->normalCompiler.structures, kl).members, jl).name, memberBeingSet) == 0){
+								memberSize = arr_get(arr_get(transpiler->normalCompiler.structures, kl).members, jl).size;
+								break;
+							};
+							size++;
+						}
+						break;
+					};
+				};
+				char result[100];
+				strcpy(result, "");
+				if (memberSize == 8){
+					strcat(result, "qword");
+				}else if (memberSize == 4){
+					strcat(result, "dword ");
+				}else if (memberSize == 2){
+					strcat(result, "word ");
+				}else if (memberSize == 1){
+					strcat(result, "byte ");
+				};
+				strcat(result, " [");
+				int res = 0;
+				for (int jh=0; jh<=transpiler->normalCompiler.constants->len-1; jh++){
+					if (strcmp(transpiler->normalCompiler.constants->value[jh].name, instance) == 0){
+						break;
+					};
+					res += arr_get(transpiler->normalCompiler.constants, jh).size;
+				};
+				strcat(result, "r14");
+				strcat(result, " + ");
+				char sizeString[100];
+				sprintf(sizeString, "%d", size + res);
+				strcat(result, sizeString);
+				strcat(result, "]");
+				strcat(result, "\n\tmov r14, __w\n\t");
+				return result;
+				// int size = 0;
+				// arr_get(transpiler->normalCompiler.structures, jkResult);
+			};
+			return "";
+	};
 	if(strcmp(arr_get(transpiler->arr, i+1).data, "[") == 0){
 		char *arrayName = arr_get(transpiler->arr, i).data;
 		int indexNumber = atoi(arr_get(transpiler->arr, i+2).data);
@@ -1668,6 +1752,35 @@ void transpile(struct Transpiler *transpiler, int *ip){
 			transpiler->personalByteCode.instruction_count++;
 		}
 	}else if(transpiler->status == Normal){
+		if (strcmp(arr_get(transpiler->arr, i).data, "struct") == 0 && transpiler->normalCompiler.inFunction == false){
+			char *structName = arr_get(transpiler->arr, i+1).data;
+			arr_constant *constants = arr_new(constant);
+			i += 2;
+			if (strcmp(arr_get(transpiler->arr, i).data, "{")){
+				error(transpiler, "No braces after structure", "StructuralError", "Hi", arr_get(transpiler->arr, i).row + 1, 0, "<no extr>", "");
+			};
+			i++;
+			while (strcmp(arr_get(transpiler->arr, i).data, "}")){
+				if (strcmp(arr_get(transpiler->arr, i).data, "int") == 0){
+					constants->value[constants->len].size = 8;
+				}else if (strcmp(arr_get(transpiler->arr, i).data, "char") == 0 || strcmp(arr_get(transpiler->arr, i).data, "byte") == 0 || strcmp(arr_get(transpiler->arr, i).data, "i8") == 0){
+					constants->value[constants->len].size = 1;
+				}else if (strcmp(arr_get(transpiler->arr, i).data, "i16") == 0){
+					constants->value[constants->len].size = 2;
+				}else if (strcmp(arr_get(transpiler->arr, i).data, "i32") == 0){
+					constants->value[constants->len].size = 4;
+				};
+				i++;
+				constants->value[constants->len].name = strdup(arr_get(transpiler->arr, i).data);
+				constants->value[constants->len++].type = strdup(arr_get(transpiler->arr, i-1).data);
+				if (strcmp(arr_get(transpiler->arr, i).data, "}") == 0){
+					break;
+				};
+				i++;
+			};
+			transpiler->normalCompiler.structures->value[transpiler->normalCompiler.structures->len].name = structName;
+			transpiler->normalCompiler.structures->value[transpiler->normalCompiler.structures->len++].members = constants;
+		};
 		if (strcmp(arr_get(transpiler->arr, i+1).data, ":") == 0){
 			strcat(transpiler->normalCompiler.dataSection, "\t");
 			strcat(transpiler->normalCompiler.dataSection, arr_get(transpiler->arr, i).data);
@@ -1678,7 +1791,7 @@ void transpile(struct Transpiler *transpiler, int *ip){
 			}else {
 				strcat(transpiler->normalCompiler.dataSection, " equ ");
 			}
-			char *parsedRes = parse_asm(transpiler, i+2, "", false, "");
+			char *parsedRes = parse_asm(transpiler, i+2, "", false, "", 0);
 			if (parsedRes[0] == '\"' || parsedRes[0] == '\''){
 				strcat(transpiler->normalCompiler.dataSection, "db ");
 			};
@@ -1687,7 +1800,8 @@ void transpile(struct Transpiler *transpiler, int *ip){
 
 			
 			strcat(transpiler->normalCompiler.dataSection, "\n");
-		}else if(strcmp(arr_get(transpiler->arr, i+1).data, "{") == 0 && inIfStatement == false){
+		}else if(strcmp(arr_get(transpiler->arr, i+1).data, "{") == 0 && inIfStatement == false && strcmp(arr_get(transpiler->arr, i-1).data, "struct")){
+			transpiler->normalCompiler.inFunction = true;
 			char *wdata = arr_get(transpiler->arr, i).data;
 			if (strcmp(wdata, "") == 0){
 				wdata = arr_get(transpiler->arr, i-1).data;
@@ -1715,16 +1829,104 @@ void transpile(struct Transpiler *transpiler, int *ip){
 				strcat(transpiler->normalCompiler.code, ":\n\t");
 				inIfStatement = false;
 			}else {
-					
+				transpiler->normalCompiler.inFunction = false;
 				if (strcmp(current_function, "start")) {
 					strcat(transpiler->normalCompiler.code, "ret\n");
 				}else {
 					strcat(transpiler->normalCompiler.code, "mov rax, 0x02000001\n\tmov       rdi, 0\n\tsyscall\n\tret");
 				}
 			}
-		}else if((strcmp(arr_get(transpiler->arr, i+1).data, "=") == 0 && strcmp(arr_get(transpiler->arr, i+2).data, "=")) && strcmp(arr_get(transpiler->arr, i+2).data, "=") && strcmp(arr_get(transpiler->arr, i).data, "=")){
-			// fprintf(stderr, "{%s, %s, %s}", arr_get(transpiler->arr, i).data, arr_get(transpiler->arr, i+1).data, arr_get(transpiler->arr, i+2).data);
-			
+		}else if(strcmp(arr_get(transpiler->arr, i).data, ".") == 0 && strcmp(arr_get(transpiler->arr, i+2).data, "=") == 0  && strcmp(arr_get(transpiler->arr, i+3).data, "=") && strcmp(arr_get(transpiler->arr, i+1).data, "=")){
+			char *memberBeingSet = arr_get(transpiler->arr, i+1).data;
+			char *class;
+			int memberSize = 0;
+			i--;
+			char *instance = arr_get(transpiler->arr, i).data;
+			int jkResult = 0;
+			bool found = false;
+			for (int jk=0; jk<=transpiler->normalCompiler.constants->len-1; jk++){
+				if (strcmp(arr_get(transpiler->normalCompiler.constants, jk).name, arr_get(transpiler->arr, i).data) == 0){
+					jkResult = jk;
+					found = true;
+					break;
+				};
+			};
+			class = arr_get(transpiler->normalCompiler.constants, jkResult).type;
+			int size;
+			if (found == true){
+				for (int kl=0; kl<=transpiler->normalCompiler.structures->len-1; kl++){
+					if (strcmp(arr_get(transpiler->normalCompiler.structures, kl).name, class) == 0){
+						size = 0;
+						for (int jl=0; jl<= arr_get(transpiler->normalCompiler.structures, kl).members->len - 1; jl++){
+							if (strcmp(arr_get(arr_get(transpiler->normalCompiler.structures, kl).members, jl).name, memberBeingSet) == 0){
+								memberSize = arr_get(arr_get(transpiler->normalCompiler.structures, kl).members, jl).size;
+								break;
+							};
+							size++;
+						}
+						break;
+					};
+				};
+				strcat(transpiler->normalCompiler.code, "mov ");
+				if (memberSize == 8){
+					strcat(transpiler->normalCompiler.code, "qword");
+				}else if (memberSize == 4){
+					strcat(transpiler->normalCompiler.code, "dword ");
+				}else if (memberSize == 2){
+					strcat(transpiler->normalCompiler.code, "word ");
+				}else if (memberSize == 1){
+					strcat(transpiler->normalCompiler.code, "byte ");
+				};
+				strcat(transpiler->normalCompiler.code, " [");
+				int res = 0;
+				for (int jh=0; jh<=transpiler->normalCompiler.constants->len-1; jh++){
+					if (strcmp(transpiler->normalCompiler.constants->value[jh].name, instance) == 0){
+						break;
+					};
+					res += arr_get(transpiler->normalCompiler.constants, jh).size;
+				};
+				strcat(transpiler->normalCompiler.code, "r14");
+				strcat(transpiler->normalCompiler.code, " + ");
+				char sizeString[100];
+				sprintf(sizeString, "%d", size + res);
+				strcat(transpiler->normalCompiler.code, sizeString);
+				strcat(transpiler->normalCompiler.code, "], ");
+				strcat(transpiler->normalCompiler.code, parse_asm(transpiler, i+4, class, false, "", ""));
+				strcat(transpiler->normalCompiler.code, "\n\t");
+				// int size = 0;
+				// arr_get(transpiler->normalCompiler.structures, jkResult);
+			};
+		}
+		else if((strcmp(arr_get(transpiler->arr, i+1).data, "=") == 0 && strcmp(arr_get(transpiler->arr, i+2).data, "=")) && strcmp(arr_get(transpiler->arr, i+2).data, "=") && strcmp(arr_get(transpiler->arr, i).data, "=")){
+			if (strcmp(arr_get(transpiler->arr, i-2).data, "struct") == 0){
+				char *structName = arr_get(transpiler->arr, i-1).data;
+				bool found = false;
+				int ji = 0;
+				for (; ji<=transpiler->normalCompiler.structures->len - 1; ji++){
+					if (strcmp(arr_get(transpiler->normalCompiler.structures, ji).name, structName) == 0){
+						found = true;
+						break;
+					}
+				};
+				if (found == true){
+					strcat(transpiler->normalCompiler.dataSection, "\t");
+						int totalSize = 0;
+						for (int k=0; k<=arr_get(transpiler->normalCompiler.structures, ji).members->len; k++){
+							totalSize += arr_get(arr_get(transpiler->normalCompiler.structures, ji).members, k).size;
+						};
+						strcat(transpiler->normalCompiler.dataSection, arr_get(transpiler->arr, i).data);
+						strcat(transpiler->normalCompiler.dataSection, " resb ");
+						char totalSizeString[10];
+						sprintf(totalSizeString, "%d", totalSize);
+						strcat(transpiler->normalCompiler.dataSection, totalSizeString);
+						strcat(transpiler->normalCompiler.dataSection, "\n\t");
+				}else {
+					error(transpiler, "Unknown Structure being used", "StructuralError", "Hi", arr_get(transpiler->arr, i).row + 1, 0, "<no extr>", "");
+				};
+				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].size = 1;
+				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].type = arr_get(transpiler->arr, i-1).data;
+				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len++].name = arr_get(transpiler->arr, i).data;
+			}
 			if (strcmp(arr_get(transpiler->arr, i).data, "=") == 0 && strcmp(arr_get(transpiler->arr, i+1).data, "=")){i++;};
 			int vardefi = i+2;
 			int namedefi = i;
@@ -1746,38 +1948,50 @@ void transpile(struct Transpiler *transpiler, int *ip){
 			}
 			if (strcmp(arr_get(transpiler->arr, i-1).data, "i16") == 0){
 				if (!isArray){strcat(transpiler->normalCompiler.dataSection, " dw ");}else {strcat(transpiler->normalCompiler.dataSection, " ");}
-				strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, vardefi, "i16", isArray, arr_get(transpiler->arr, namedefi).data));
+				strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, vardefi, "i16", isArray, arr_get(transpiler->arr, namedefi).data, 0));
 				strcat(transpiler->normalCompiler.dataSection, "\n\t");
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].size = 1;
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].type = arr_get(transpiler->arr, i-1).data;
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len++].name = arr_get(transpiler->arr, namedefi).data;
 			}else if (strcmp(arr_get(transpiler->arr, i-1).data, "i32") == 0){
 				if (!isArray){strcat(transpiler->normalCompiler.dataSection, " dd ");}else {strcat(transpiler->normalCompiler.dataSection, " ");}
-				strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, vardefi, "i32", isArray, arr_get(transpiler->arr, namedefi).data));
+				strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, vardefi, "i32", isArray, arr_get(transpiler->arr, namedefi).data, 0));
 				strcat(transpiler->normalCompiler.dataSection, "\n\t");
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].size = 1;
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].type = arr_get(transpiler->arr, i-1).data;
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len++].name = arr_get(transpiler->arr, namedefi).data;
 			}else if (strcmp(arr_get(transpiler->arr, i-1).data, "i64") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "int") == 0){
 				if (!isArray){strcat(transpiler->normalCompiler.dataSection, " dq ");}else {strcat(transpiler->normalCompiler.dataSection, " ");}
-				strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, vardefi, "i64", isArray, arr_get(transpiler->arr, namedefi).data));
+				strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, vardefi, "i64", isArray, arr_get(transpiler->arr, namedefi).data, 0));
 				strcat(transpiler->normalCompiler.dataSection, "\n\t");
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].size = 1;
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].type = arr_get(transpiler->arr, i-1).data;
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len++].name = arr_get(transpiler->arr, namedefi).data;
 			}else if (strcmp(arr_get(transpiler->arr, i-1).data, "byte") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "char") == 0 || strcmp(arr_get(transpiler->arr, i-1).data, "i8") == 0){
 				if (!isArray){strcat(transpiler->normalCompiler.dataSection, " db ");}else {strcat(transpiler->normalCompiler.dataSection, " ");}
-				strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, vardefi, "i8", isArray, arr_get(transpiler->arr, namedefi).data));
+				strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, vardefi, "i8", isArray, arr_get(transpiler->arr, namedefi).data, 0));
 				strcat(transpiler->normalCompiler.dataSection, "\n\t");
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].size = 1;
+				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].type = arr_get(transpiler->arr, i-1).data;
+				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len++].name = arr_get(transpiler->arr, namedefi).data;
+			}else if (strcmp(arr_get(transpiler->arr, i-1).data, "ptr") == 0){
+				strcat(transpiler->normalCompiler.dataSection, "\t");
+				strcat(transpiler->normalCompiler.dataSection, val);
+				strcat(transpiler->normalCompiler.dataSection, " ");
+				int size;
+				strcat(transpiler->normalCompiler.dataSection, parse_asm(transpiler, vardefi, "ptr", isArray, arr_get(transpiler->arr, namedefi).data, &size));
+				strcat(transpiler->normalCompiler.dataSection, "\n\t");
+				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].size = size;
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len].type = arr_get(transpiler->arr, i-1).data;
 				transpiler->normalCompiler.constants->value[transpiler->normalCompiler.constants->len++].name = arr_get(transpiler->arr, namedefi).data;
 			}else {
 				int res = 2;
 				int found = 0;
+				int foundLocation = 0;
 				for (int i=0; i<=transpiler->normalCompiler.constants->len-1; i++){
 					if (strcmp(arr_get(transpiler->normalCompiler.constants, i).name, val) == 0){
 						found = 1;
+						foundLocation = i;
 						break;
 					};
 					res += arr_get(transpiler->normalCompiler.constants, i).size;
@@ -1790,14 +2004,25 @@ void transpile(struct Transpiler *transpiler, int *ip){
 					};
 					char rstr[500];
 					sprintf(rstr, "%d", res);
-					strcat(transpiler->normalCompiler.code, "mov [r14 + ");
+					strcat(transpiler->normalCompiler.code, "mov ");
+					char *length = "";
+					if (arr_get(transpiler->normalCompiler.constants, foundLocation).size == 1){
+						length = "byte";
+					}else if (arr_get(transpiler->normalCompiler.constants, foundLocation).size == 2){
+						length = "word";
+					}else if (arr_get(transpiler->normalCompiler.constants, foundLocation).size == 4){
+						length = "dword";
+					};
+					strcat(transpiler->normalCompiler.code, length);
+					strcat(transpiler->normalCompiler.code, " [");
+					strcat(transpiler->normalCompiler.code, "r14 + ");
 					strcat(transpiler->normalCompiler.code, rstr);
 					strcat(transpiler->normalCompiler.code, "], ");
 					strcat(transpiler->normalCompiler.code, arr_get(transpiler->arr, i+2).data);
 					strcat(transpiler->normalCompiler.code, "\n\t");
 				}else {
 					if (strcmp(val, "rax") == 0){
-						strcpy(rax, parse_asm(transpiler, i+2, "", false, ""));
+						strcpy(rax, parse_asm(transpiler, i+2, "", false, "", 0));
 					};
 					if (strcmp(val, "rax") && strcmp(val, "rbx") && strcmp(val, "rcx") && strcmp(val, "rdx") && strcmp(val, "rsp") && strcmp(val, "rbp") && strcmp(val, "rsi") && strcmp(val, "rdi") && strcmp(val, "r10") && strcmp(val, "r11") && strcmp(val, "r12")){
 						int found = 0;
@@ -1834,7 +2059,7 @@ void transpile(struct Transpiler *transpiler, int *ip){
 							strcat(transpiler->normalCompiler.code, "\n\t");
 						}
 					}else {
-						char *a = arr_get(transpiler->arr, i+2).data;
+						char *a = parse_expr_asm(transpiler, i+2);
 						int found = 0;
 						for (int j=0; j<=transpiler->normalCompiler.constants->len-1; j++){
 							if (strcmp(parse_expr_asm(transpiler, i+2), arr_get(transpiler->normalCompiler.constants, j).name) == 0){
@@ -1842,9 +2067,9 @@ void transpile(struct Transpiler *transpiler, int *ip){
 							};
 						};
 						if (arr_get(transpiler->normalCompiler.constants, found).type != 0) {
-							strcat(transpiler->normalCompiler.code, "mov r14, ");
-							strcat(transpiler->normalCompiler.code, a);
-							strcat(transpiler->normalCompiler.code, "\n\t");
+							// strcat(transpiler->normalCompiler.code, "mov r14, ");
+							// strcat(transpiler->normalCompiler.code, a);
+							// strcat(transpiler->normalCompiler.code, "\n\t");
 						}
 							if (strcmp(arr_get(transpiler->arr, i+2).data, "&") == 0){
 								strcat(transpiler->normalCompiler.code, "lea ");
@@ -1854,9 +2079,23 @@ void transpile(struct Transpiler *transpiler, int *ip){
 						strcat(transpiler->normalCompiler.code, val);
 						strcat(transpiler->normalCompiler.code, ", ");
 						if (arr_get(transpiler->normalCompiler.constants, found).type != 0) {
-						strcat(transpiler->normalCompiler.code, "qword [");
-						strcat(transpiler->normalCompiler.code, "r14");
-						strcat(transpiler->normalCompiler.code, "]");
+
+						if (strcmp(arr_get(transpiler->normalCompiler.constants, found).type, "ptr") == 0){
+							strcat(transpiler->normalCompiler.code, "[");
+							int res = 0;
+							for (int i=0; i<=transpiler->normalCompiler.constants->len-1; i++){
+								res += arr_get(transpiler->normalCompiler.constants, i).size;
+							};
+							char rstr[500];
+							sprintf(rstr, "%d", res);
+							strcat(transpiler->normalCompiler.code, "r14 + ");
+							strcat(transpiler->normalCompiler.code, rstr);
+							strcat(transpiler->normalCompiler.code, "]");
+						}else {
+							strcat(transpiler->normalCompiler.code, "qword [");
+							strcat(transpiler->normalCompiler.code, "r14");
+							strcat(transpiler->normalCompiler.code, "]");
+						}
 						}else{
 							strcat(transpiler->normalCompiler.code, a);
 						}
@@ -2144,6 +2383,8 @@ void run_transpiler(struct Transpiler *transpiler){
 		strcpy(transpiler->normalCompiler.globals, "\n");
 		transpiler->normalCompiler.variables = arr_new(variable);
 		transpiler->normalCompiler.constants = arr_new(constant);
+		transpiler->normalCompiler.structures = arr_new(Structure);
+		transpiler->normalCompiler.inFunction = false;
 		transpiler->normalCompiler.stack_size = 0;
 		strcat(transpiler->normalCompiler.dataSection, "\t__w: dw 0\n");
 		strcpy(rax, "");
