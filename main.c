@@ -414,12 +414,14 @@ enum ConstantType{
 	CONSTANT_LT,
 	CONSTANT_GTE,
 	CONSTANT_GT,
-	CONSTANT_METHOD_END
+	CONSTANT_METHOD_END,
+	CONSTANT_STRUCT
 };
 
 struct Constant{
 	enum ConstantType type;
 	uint8_t bytes[40];
+	char extra[40];
 };
 char constant_names[50][50];
 int constant_names_count = 0;
@@ -495,6 +497,7 @@ struct Simulate {
 	arr_string *constants;
 	arr_Constant *variables;
 	arr_string *registers;
+	arr_Structure *structures;
 	int variablelength;
 };
 
@@ -674,7 +677,7 @@ void help(){
 }
 
 bool alreadyWentThrough = false;
-char *current_function;
+char *current_function = "<global>";
 
 int currentMode = 0; // Normal mode
 
@@ -1358,6 +1361,53 @@ void transpile(struct Transpiler *transpiler, int *ip){
 				current_function = "<global scope>";
 			}
 		};
+		if (strcmp(arr_get(transpiler->arr, i).data, "struct") == 0){
+			if (strcmp(current_function, "<global scope>") == 0) {
+				char *structName = arr_get(transpiler->arr, i+1).data;
+				arr_constant *constants = arr_new(constant);
+				i += 2;
+				if (strcmp(arr_get(transpiler->arr, i).data, "{")){
+					error(transpiler, "No braces after structure", "StructuralError", "Hi", arr_get(transpiler->arr, i).row + 1, 0, "<no extr>", "");
+				};
+				i++;
+				while (strcmp(arr_get(transpiler->arr, i).data, "}")){
+					if (strcmp(arr_get(transpiler->arr, i).data, "int") == 0){
+						constants->value[constants->len].size = 8;
+					}else if (strcmp(arr_get(transpiler->arr, i).data, "char") == 0 || strcmp(arr_get(transpiler->arr, i).data, "byte") == 0 || strcmp(arr_get(transpiler->arr, i).data, "i8") == 0){
+						constants->value[constants->len].size = 1;
+					}else if (strcmp(arr_get(transpiler->arr, i).data, "i16") == 0){
+						constants->value[constants->len].size = 2;
+					}else if (strcmp(arr_get(transpiler->arr, i).data, "i32") == 0){
+						constants->value[constants->len].size = 4;
+					};
+					i++;
+					constants->value[constants->len].name = strdup(arr_get(transpiler->arr, i).data);
+					constants->value[constants->len++].type = strdup(arr_get(transpiler->arr, i-1).data);
+					if (strcmp(arr_get(transpiler->arr, i).data, "}") == 0){
+						break;
+					};
+					i++;
+				};
+				transpiler->simulation.structures->value[transpiler->simulation.structures->len].name = structName;
+				transpiler->simulation.structures->value[transpiler->simulation.structures->len++].members = constants;
+				i++;
+			}
+		}else if(strcmp(arr_get(transpiler->arr, i).data, ".") == 0 && strcmp(arr_get(transpiler->arr, i+2).data, "=") == 0  && strcmp(arr_get(transpiler->arr, i+3).data, "=") && strcmp(arr_get(transpiler->arr, i+1).data, "=")){
+			i--;
+			for (int ji=0; ji<=arr_size(transpiler->simulation.variables); ji++){
+				if (arr_get(transpiler->simulation.variables, ji).type == CONSTANT_STRUCT && strcmp(arr_get(transpiler->simulation.variables, ji).extra, arr_get(transpiler->arr, i).data) == 0);{
+					
+						// fprintf(stderr, "%d : %s, %s\n", arr_size(transpiler->simulation.structures), arr_get(transpiler->simulation.variables, ji).extra, arr_get(transpiler->arr, i).data);
+					if (strcmp(arr_get(transpiler->simulation.variables, ji).extra, "")) {
+						for (int jk=0; jk<=transpiler->simulation.structures->len; jk++){
+							if (strcmp(arr_get(transpiler->simulation.structures, jk).name, arr_get(transpiler->simulation.variables, ji).extra) == 0){
+								fprintf(stderr, "FOUND IT\n");
+							};
+						}
+					}
+				}
+			};
+		};
 		if (strcmp(current_function, "main")==0 || (current_function[0] == '<'&&current_function[1] == 'm'&&current_function[2] == '>')) {
 			if (strcmp(arr_get(transpiler->arr, i+1).data, "=") == 0 && strcmp(arr_get(transpiler->arr, i+2).data, "=") && strcmp(arr_get(transpiler->arr, i).data, "=")){
 				if (strcmp(arr_get(transpiler->arr, i).data, "=") == 0 && strcmp(arr_get(transpiler->arr, i+1).data, "=")){i++;};
@@ -1374,6 +1424,7 @@ void transpile(struct Transpiler *transpiler, int *ip){
 				};
 				if (found == 0){
 					struct Constant s;
+						strcpy(s.extra, "");
 					s.type = CONSTANT_METHOD;
 					strcpy(s.bytes, val);
 					arr_push(transpiler->simulation.variables, s);
@@ -1383,9 +1434,26 @@ void transpile(struct Transpiler *transpiler, int *ip){
 						s.type = CONSTANT_INT;
 					};
 					strcpy(s.bytes, transpile_expr(transpiler, i+2, arr_get(transpiler->arr, i+2).data));
+					if (strcmp(arr_get(transpiler->arr, i-1).data, ".") == 0){
+						fprintf(stderr, "HI");
+					};
+					if (strcmp(arr_get(transpiler->arr, i-2).data, "struct") == 0){
+						// fprintf(stderr, "{%s %s %s}", arr_get(transpiler->arr, i-2).data, arr_get(transpiler->arr, i-1).data, arr_get(transpiler->arr, i).data);
+						s.type = CONSTANT_STRUCT;
+						strcpy(s.extra, arr_get(transpiler->arr, i-1).data);
+						strcpy(s.bytes, "");
+						for (int jk=0; jk<=transpiler->simulation.structures->len - 1; jk++){
+							if (strcmp(arr_get(transpiler->simulation.structures, jk).name, arr_get(transpiler->arr, i-1).data) == 0){
+								for (int ij=0; i<=arr_get(transpiler->simulation.structures, jk).members->len-1; ij++){
+									// if (strcmp(arr_get(arr_get(transpiler->simulation.structures, jk).members, ij).name, arr_get(transpiler)) == 0);
+								};
+							}
+						}
+					};
 					arr_push(transpiler->simulation.variables, s);
+					i += 3;
 				};
-			}else if(strcmp(arr_get(transpiler->arr, i).data, "if") == 0){
+			} else if(strcmp(arr_get(transpiler->arr, i).data, "if") == 0){
 				alreadyWentThrough = false;
 				inIfStatement = true;
 				char *a = transpile_expr(transpiler, i+1, parse_expr_asm(transpiler, i+1));
@@ -1555,22 +1623,34 @@ void transpile(struct Transpiler *transpiler, int *ip){
 					error(transpiler, err, "SyscallError", "syscall", i, global+2, "invalid syscall number was set here", "");
 				}
 			}else if(strcmp(arr_get(transpiler->arr, i).data, "jmp") == 0 || strcmp(arr_get(transpiler->arr, i).data, "call") == 0){
-				char crf[50];
-				strcpy(crf, "<m>");
-				strcat(crf, arr_get(transpiler->arr, i+1).data);
-				current_function = strdup(crf);
-				for (int j=0; j<=transpiler->arr->len; j++){
-					if (j == i){
-						j+=2;
+				if(strcmp(arr_get(transpiler->arr, i+1).data, "strlen") == 0){
+					for (int i=0; i<=transpiler->simulation.registers->len - 1; i++){
+							// fprintf(stderr, "{%s}", arr_get(transpiler->simulation.registers, i));
+						if (strcmp(arr_get(transpiler->simulation.registers, i), "rsi") == 0){
+							char string1[100];
+							sprintf(string1, "%d", strlen(arr_get(transpiler->simulation.registers, i+1)));
+							arr_get(transpiler->simulation.registers, i+1) = string1;
+						};
 					};
-					if (strcmp(arr_get(transpiler->arr, j).data, arr_get(transpiler->arr, i+1).data) == 0 && strcmp(arr_get(transpiler->arr, j+1).data, "{") == 0){
-						j+=2;
-						while (strcmp(arr_get(transpiler->arr, j).data, "}")){
-							transpile(transpiler, &j);
-							j++;
-						}
+				}else if(strcmp(arr_get(transpiler->arr, i+1).data, "int_to_str") == 0){
+				}else {
+					char crf[50];
+					strcpy(crf, "<m>");
+					strcat(crf, arr_get(transpiler->arr, i+1).data);
+					current_function = strdup(crf);
+					for (int j=0; j<=transpiler->arr->len; j++){
+						if (j == i){
+							j+=2;
+						};
+						if (strcmp(arr_get(transpiler->arr, j).data, arr_get(transpiler->arr, i+1).data) == 0 && strcmp(arr_get(transpiler->arr, j+1).data, "{") == 0){
+							j+=2;
+							while (strcmp(arr_get(transpiler->arr, j).data, "}")){
+								transpile(transpiler, &j);
+								j++;
+							}
+						};
 					};
-				};
+				}
 			}else if(strcmp(arr_get(transpiler->arr, i).data, "jnz") == 0){
 				if (atoi(arr_get(transpiler->simulation.registers, 1))==0){
 					i+=2;
@@ -1601,6 +1681,7 @@ void transpile(struct Transpiler *transpiler, int *ip){
 		if (strcmp(arr_get(transpiler->arr, i+1).data, ":") == 0){
 			i+=2;
 			transpiler->personalByteCode.constant_pool[transpiler->personalByteCode.constant_pool_count++] = transpile_expr_byte(transpiler, i);
+			constant_names_count++;
 			strcpy(constant_names[constant_names_count++], arr_get(transpiler->arr, i-2).data);
 			i++;
 		}else if (strcmp(arr_get(transpiler->arr, i+1).data, "{") == 0 && inIfStatement == false){
@@ -2093,7 +2174,7 @@ void transpile(struct Transpiler *transpiler, int *ip){
 							strcat(transpiler->normalCompiler.code, "]");
 						}else {
 							strcat(transpiler->normalCompiler.code, "qword [");
-							strcat(transpiler->normalCompiler.code, "r14");
+							strcat(transpiler->normalCompiler.code, "r13");
 							strcat(transpiler->normalCompiler.code, "]");
 						}
 						}else{
@@ -2328,6 +2409,7 @@ void run_transpiler(struct Transpiler *transpiler){
 		transpiler->simulation.constants = arr_new(string);
 		transpiler->simulation.registers = arr_new(string);
 		transpiler->simulation.variables = arr_new(Constant);
+		transpiler->simulation.structures = arr_new(Structure);
 		arr_push(transpiler->simulation.registers, "rax");
 		arr_push(transpiler->simulation.registers, "");
 		arr_push(transpiler->simulation.registers, "rbx");
@@ -2372,7 +2454,7 @@ void run_transpiler(struct Transpiler *transpiler){
 		};
 		fwrite(&transpiler->personalByteCode.constant_pool_count, sizeof(unsigned int), 1, f);
 		fwrite(&transpiler->personalByteCode.constant_pool, sizeof(struct Constant), transpiler->personalByteCode.constant_pool_count, f);
-		fwrite(&constant_names_count, sizeof(int), 1, f);
+		fwrite(&constant_names_count, sizeof(unsigned int), 1, f);
 		fwrite(constant_names, sizeof(char)*50, constant_names_count, f);
 		fwrite(&transpiler->personalByteCode.methods_count, sizeof(unsigned int), 1, f);
 		fwrite(&transpiler->personalByteCode.method_pool, sizeof(struct Constant), transpiler->personalByteCode.methods_count, f);
@@ -2448,6 +2530,8 @@ void run_transpiler(struct Transpiler *transpiler){
 	   fwrite(str, sizeof(char), strlen(str), f);
 	   fwrite(transpiler->normalCompiler.dataSection, sizeof(char), strlen(transpiler->normalCompiler.dataSection), f);
 		str = "section .text\n";
+	   fwrite(str, sizeof(char), strlen(str), f);
+		str = "_strlen_start:\n\tcmp word [r12], 0\n\tje _strlen_end\n\tinc r12\n\tinc r11\n\tjmp _strlen_start\n\tret\n_strlen_end:\n\tmov rax, 0\n\tret\nstrlen:\n\tmov r11, 0 ;; counter\n\tmov r12, rsi\n\tcall _strlen_start\n\tmov rsi, r11\n\tret\n\ndig1_to_str:\n\tadd dil, '0'\n\tcall char_to_str\n\tret\n\n\nchar_to_str:\n\tsub rsp, 16\n\tmov al, dil\n\tmov byte [rsp], al\n\tmov byte [rsp+1], 0\n\tlea rdi, [rsp]\n\tadd rsp, 16\n\tret\n\n\n\n\n\n\n\n\nint_to_str:\n\tpush rbx\n\tpush rdx\n\n\tmov rbx, rdi\n\tmov rax, rdi\n\tsub rsp, 32\n\tcmp rbx, 0\n\tjne _int_to_str_convert_loop\n\tmov byte [rsp], '0'\n\tmov byte [rsp+1], 0\n\tlea rdi, [rsp]\n\tjmp _int_to_str_end\n\n_int_to_str_convert_loop:\n\tmov rdi, rsp\n\tadd rdi, 30\n\tmov byte [rdi+1], 0\n\n\ttest rbx, rbx\n\tmov byte [rsp - 1], '-'\n\tjns _int_to_str_int_to_str_convert_digits\n\tneg rax\n\tdec rdi\n\n_int_to_str_int_to_str_convert_digits:\n\tmov rcx, 10\n_int_to_str_convert_digit_loop:\n\txor rdx, rdx\n\tdiv rcx\n\tadd dl, '0'\n\tmov [rdi], dl\n\tdec rdi\n\ttest rax, rax\n\tjnz _int_to_str_convert_digit_loop\n\tlea rdi, [rdi+1]\n\n_int_to_str_end:\n\tadd rsp, 32\n\tpop rdx\n\tpop rbx\n\tret\n";
 	   fwrite(str, sizeof(char), strlen(str), f);
 	   fwrite(transpiler->normalCompiler.code, sizeof(char), strlen(transpiler->normalCompiler.code), f);
 
@@ -2587,8 +2671,8 @@ int main(int argc, char **argv){
 		fprintf(stderr, "The file %s does not exist.\n", input_file);
 		exit(1);
 	};
-	char data[900000];
-	fread(data, sizeof(char)*900000, 1, f);
+	char data[1000000];
+	fread(data, sizeof(char)*1000000, 1, f);
 	fclose(f);
 	arr_String *arr = arr_new(String);
 	for (int i=0; i<=250; i++){

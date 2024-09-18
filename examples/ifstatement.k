@@ -8,7 +8,7 @@ main {
     if rax >= 6 {
         rdi = msg
         rsi = msglen
-        call print
+        call _print
     }
     rdi = 10
     call exit

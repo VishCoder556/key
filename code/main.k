@@ -1,13 +1,5 @@
-include "../libs/stdio.k"
-
-struct Man {
-    int member;
-}
+msg: "HI"
 
 main {
-    struct Man a = 10;
-    a.member = 8;
-    rdi = a.member;
-    inc rdi;
-    call exit;
+    syscall
 }

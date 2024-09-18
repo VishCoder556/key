@@ -6,7 +6,7 @@ msglen: $msg
 main {
     rdi = msg
     rsi = msglen
-    call print
+    call _print
     rdi = 2
     inc rdi
     mul rdi, 4

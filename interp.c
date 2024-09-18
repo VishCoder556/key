@@ -801,7 +801,7 @@ void run(char *input_file){
     fread(&constants, sizeof(struct Constant), constant_pool_count, f);
 
 
-    fread(&constant_names_count, sizeof(int), 1, f);
+    fread(&constant_names_count, sizeof(unsigned int), 1, f);
     fread(constant_names, sizeof(char)*50, constant_names_count, f);
 
 
@@ -810,8 +810,9 @@ void run(char *input_file){
     fread(&methods, sizeof(struct Constant), methods_count, f);
 
 
-    unsigned int instruction_count;
+    unsigned int instruction_count = 3;
     fread(&instruction_count, sizeof(unsigned int), 1, f);
+    fprintf(stderr, "%d", instruction_count);
     fread(&instructions, sizeof(struct Instruction), instruction_count, f);
 
 
