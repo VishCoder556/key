@@ -418,43 +418,11 @@ enum ConstantType{
 	CONSTANT_STRUCT
 };
 
-struct Constant{
+typedef struct Constant{
 	enum ConstantType type;
 	uint8_t bytes[40];
 	char extra[40];
-};
-char constant_names[50][50];
-int constant_names_count = 0;
-
-enum InstructionType{
-    INST_JMP,
-	INST_MOV,
-	INST_SYSCALL,
-    INST_JNZ,
-    INST_INC,
-    INST_ADD,
-	INST_SUB,
-	INST_DEC,
-	INST_IF,
-	INST_IFEND
-};
-
-struct Instruction{
-	uint8_t method[10];
-	enum InstructionType type;
-	int col, row;
-	uint8_t operand1[10];
-	struct Constant operand2;
-};
-typedef struct Constant Constant;
-struct PersonalByteCodeCompiler {
-	unsigned int constant_pool_count;
-	struct Constant constant_pool[50];
-	unsigned int methods_count;
-	struct Constant method_pool[50];
-	unsigned int instruction_count;
-	struct Instruction instruction_pool[10];
-};
+}Constant;
 
 typedef struct variable{
 	char* name;
@@ -516,8 +484,6 @@ struct Transpiler {
 	char data[19999];
 	int idx;
 	union {
-		struct JavaClassCompiler java;
-		struct PersonalByteCodeCompiler personalByteCode;
 		struct AssemblyTranspiler normalCompiler;
 		struct Simulate simulation;
 	};
@@ -1676,162 +1642,6 @@ void transpile(struct Transpiler *transpiler, int *ip){
 				};
 			}
 		}
-	}else if(transpiler->status == PersonalByteCode){
-		// TODO: IMPLEMENT PTRS IN PERSONAL BYTECODE
-		if (strcmp(arr_get(transpiler->arr, i+1).data, ":") == 0){
-			i+=2;
-			transpiler->personalByteCode.constant_pool[transpiler->personalByteCode.constant_pool_count++] = transpile_expr_byte(transpiler, i);
-			constant_names_count++;
-			strcpy(constant_names[constant_names_count++], arr_get(transpiler->arr, i-2).data);
-			i++;
-		}else if (strcmp(arr_get(transpiler->arr, i+1).data, "{") == 0 && inIfStatement == false){
-			current_function = arr_get(transpiler->arr, i).data;
-			if (strcmp(current_function, "") == 0){
-				current_function = arr_get(transpiler->arr, i-1).data;
-			};
-		} else if (strcmp(arr_get(transpiler->arr, i).data, "}") == 0){
-			if (inIfStatement == true){
-				
-				transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].type = INST_IFEND;
-				transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].col = arr_get(transpiler->arr, i).col;
-				transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].row = arr_get(transpiler->arr, i).row;
-				transpiler->personalByteCode.instruction_count++;
-				inIfStatement = false;
-			}else {
-				transpiler->personalByteCode.method_pool[transpiler->personalByteCode.methods_count].type = CONSTANT_METHOD;
-				int byteslen = sizeof(transpiler->personalByteCode.method_pool[transpiler->personalByteCode.methods_count].bytes);
-				memcpy(transpiler->personalByteCode.method_pool[transpiler->personalByteCode.methods_count].bytes, current_function, byteslen);
-				transpiler->personalByteCode.methods_count++;
-				current_function = "<global scope>";
-			}
-		}else if(strcmp(arr_get(transpiler->arr, i).data, "syscall") == 0){
-			int byteslen = sizeof(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].method);
-			memcpy(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].method, current_function, byteslen);
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].type = INST_SYSCALL;
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].col = arr_get(transpiler->arr, i).col;
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].row = arr_get(transpiler->arr, i).row;
-			transpiler->personalByteCode.instruction_count++;
-		}else if(strcmp(arr_get(transpiler->arr, i).data, "if") == 0){
-			inIfStatement = true;
-			int byteslen = sizeof(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].method);
-			memcpy(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].method, current_function, byteslen);
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].type = INST_IF;
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].operand2 = transpile_expr_byte(transpiler, i+1);
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].col = arr_get(transpiler->arr, i).col;
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].row = arr_get(transpiler->arr, i).row;
-			transpiler->personalByteCode.instruction_count++;
-		}else if((strcmp(arr_get(transpiler->arr, i+1).data, "=") == 0 && strcmp(arr_get(transpiler->arr, i+2).data, "=")) && strcmp(arr_get(transpiler->arr, i).data, ">") && strcmp(arr_get(transpiler->arr, i).data, "<") && strcmp(arr_get(transpiler->arr, i+2).data, "=") && strcmp(arr_get(transpiler->arr, i).data, "=")){
-
-			char *val = arr_get(transpiler->arr, i).data;
-			if (strcmp(arr_get(transpiler->arr, i).data, "") == 0){
-				val = arr_get(transpiler->arr, i-1).data;
-			};
-
-			int byteslen = sizeof(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].method);
-			memcpy(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].method, current_function, byteslen);
-			
-
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].type = INST_MOV;
-
-			byteslen = sizeof(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].operand1);
-			memcpy(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].operand1, val, byteslen);
-
-
-			byteslen = sizeof(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].operand2.bytes);
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].operand2.type = transpile_expr_byte(transpiler, i+2).type;
-			memcpy(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].operand2.bytes, transpile_expr_byte(transpiler, i+2).bytes, byteslen);
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].col = arr_get(transpiler->arr, i).col;
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].row = arr_get(transpiler->arr, i).row;
-			transpiler->personalByteCode.instruction_count++;
-		}else if(strcmp(arr_get(transpiler->arr, i).data, "add") == 0){
-			int byteslen = sizeof(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].method);
-			memcpy(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].method, current_function, byteslen);
-			
-
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].type = INST_ADD;
-
-			byteslen = sizeof(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].operand1);
-			memcpy(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].operand1, arr_get(transpiler->arr, i+1).data, byteslen);
-
-
-			byteslen = sizeof(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].operand2.bytes);
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].operand2.type = transpile_expr_byte(transpiler, i+2).type;
-			memcpy(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].operand2.bytes, arr_get(transpiler->arr, i+2).data, byteslen);
-			
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].col = arr_get(transpiler->arr, i).col;
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].row = arr_get(transpiler->arr, i).row;
-			transpiler->personalByteCode.instruction_count++;
-		}else if(strcmp(arr_get(transpiler->arr, i).data, "sub") == 0){
-			int byteslen = sizeof(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].method);
-			memcpy(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].method, current_function, byteslen);
-			
-
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].type = INST_SUB;
-
-			byteslen = sizeof(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].operand1);
-			memcpy(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].operand1, arr_get(transpiler->arr, i+1).data, byteslen);
-
-
-			byteslen = sizeof(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].operand2);
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].operand2.type = transpile_expr_byte(transpiler, i+2).type;
-			strcpy((char*)transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].operand2.bytes, arr_get(transpiler->arr, i+2).data);
-			
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].col = arr_get(transpiler->arr, i).col;
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].row = arr_get(transpiler->arr, i).row;
-			transpiler->personalByteCode.instruction_count++;
-		}else if (strcmp(arr_get(transpiler->arr, i).data, "inc") == 0){
-			int byteslen = sizeof(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].method);
-			memcpy(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].method, current_function, byteslen);
-			
-
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].type = INST_INC;
-
-			byteslen = sizeof(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].operand1);
-			memcpy(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].operand1, arr_get(transpiler->arr, i+1).data, byteslen);
-			
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].col = arr_get(transpiler->arr, i).col;
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].row = arr_get(transpiler->arr, i).row;
-			transpiler->personalByteCode.instruction_count++;
-		}else if (strcmp(arr_get(transpiler->arr, i).data, "dec") == 0){
-			int byteslen = sizeof(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].method);
-			memcpy(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].method, current_function, byteslen);
-			
-
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].type = INST_DEC;
-
-			byteslen = sizeof(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].operand1);
-			memcpy(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].operand1, arr_get(transpiler->arr, i+1).data, byteslen);
-			
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].col = arr_get(transpiler->arr, i).col;
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].row = arr_get(transpiler->arr, i).row;
-			transpiler->personalByteCode.instruction_count++;
-		}else if(strcmp(arr_get(transpiler->arr, i).data, "jmp") == 0 || strcmp(arr_get(transpiler->arr, i).data, "call") == 0){
-			int byteslen = sizeof(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].method);
-			memcpy(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].method, current_function, byteslen);
-			
-
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].type = INST_JMP;
-
-			byteslen = sizeof(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].operand1);
-			memcpy(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].operand1, arr_get(transpiler->arr, i+1).data, byteslen);
-			
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].col = arr_get(transpiler->arr, i).col;
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].row = arr_get(transpiler->arr, i).row;
-			transpiler->personalByteCode.instruction_count++;
-		}else if(strcmp(arr_get(transpiler->arr, i).data, "jnz") == 0){
-			int byteslen = sizeof(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].method);
-			memcpy(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].method, current_function, byteslen);
-			
-
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].type = INST_JNZ;
-
-			byteslen = sizeof(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].operand1);
-			memcpy(transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].operand1, arr_get(transpiler->arr, i+1).data, byteslen);
-			
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].col = arr_get(transpiler->arr, i).col;
-			transpiler->personalByteCode.instruction_pool[transpiler->personalByteCode.instruction_count].row = arr_get(transpiler->arr, i).row;
-			transpiler->personalByteCode.instruction_count++;
-		}
 	}else if(transpiler->status == Normal){
 		if (strcmp(arr_get(transpiler->arr, i).data, "struct") == 0 && transpiler->normalCompiler.inFunction == false){
 			char *structName = arr_get(transpiler->arr, i+1).data;
@@ -2435,32 +2245,6 @@ void run_transpiler(struct Transpiler *transpiler){
 		for (int i=0; i<=transpiler->arr->len; i++){
 			transpile(transpiler, &i);
 		};
-	}else if(transpiler->status == PersonalByteCode) {
-       FILE *f  = fopen(transpiler->output_file, "wb");
-	   if (f == 0){
-         printf("No permissions to write into bytecode file %s\n", transpiler->output_file);
-	   };
-	   uint32_t magic = 0xCDECFACA;
-	   uint16_t minor_version = 0x0000;
-	   uint16_t major_version = 0x0000;
-	   fwrite(&magic, 1, sizeof(uint32_t), f);
-	   fwrite(&minor_version, 1, sizeof(uint16_t), f);
-	   fwrite(&major_version, 1, sizeof(uint16_t), f);
-	   transpiler->personalByteCode.constant_pool_count = 0;
-	   transpiler->personalByteCode.methods_count = 0;
-	   transpiler->personalByteCode.instruction_count = 0;
-		for (int i=0; i<=transpiler->arr->len; i++){
-			transpile(transpiler, &i);
-		};
-		fwrite(&transpiler->personalByteCode.constant_pool_count, sizeof(unsigned int), 1, f);
-		fwrite(&transpiler->personalByteCode.constant_pool, sizeof(struct Constant), transpiler->personalByteCode.constant_pool_count, f);
-		fwrite(&constant_names_count, sizeof(unsigned int), 1, f);
-		fwrite(constant_names, sizeof(char)*50, constant_names_count, f);
-		fwrite(&transpiler->personalByteCode.methods_count, sizeof(unsigned int), 1, f);
-		fwrite(&transpiler->personalByteCode.method_pool, sizeof(struct Constant), transpiler->personalByteCode.methods_count, f);
-		fwrite(&transpiler->personalByteCode.instruction_count, sizeof(unsigned int), 1, f);
-		fwrite(&transpiler->personalByteCode.instruction_pool, sizeof(struct Instruction), transpiler->personalByteCode.instruction_count, f);
-	   fclose(f);
 	}else if(transpiler->status == Normal){
 		strcpy(transpiler->normalCompiler.globals, "\n");
 		transpiler->normalCompiler.variables = arr_new(variable);
@@ -2636,8 +2420,6 @@ int main(int argc, char **argv){
 			exit(0);
 		} else if(strcmp(*argv, "-sim") == 0){
 			mode = Simulate;
-		}else if(strcmp(*argv, "-byte") == 0){
-			mode = PersonalByteCode;
 		}else if(strcmp(*argv, "-class") == 0){
 			mode = Java;
 		}else if(strcmp(*argv, "-S") == 0){
@@ -2662,9 +2444,6 @@ int main(int argc, char **argv){
 	};
 	if (output_file == 0) {
 		output_file = "main.s";
-		if (mode == PersonalByteCode) {
-          output_file = "a.ke";
-		};
 	};
 	FILE *f = fopen(input_file, "r");
 	if (f == 0){

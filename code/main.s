@@ -4,9 +4,7 @@ section .data
 	__w: dw 0
 	newline: db  "", 10, ""
 	msg: db  "Hello Worlds"
-	person dq 13
-		b dq 41
-	section .text
+section .text
 _strlen_start:
 	cmp word [r12], 0
 	je _strlen_end
@@ -142,20 +140,15 @@ println:
 open:
 	start:
 	mov r14, __w
-	mov r13, b
-	mov r13, b
-	mov r13, b
-	mov r13, b
-	mov r13, b
-	mov rdi, qword [r13]
-	call int_to_str
+	mov r13, msg
+	mov r13, msg
+	mov r13, msg
+	mov rdi, msg
 	call print
-	mov r13, person
-	mov r13, person
-	mov r13, person
-	mov r13, person
-	mov r13, person
-	mov rdi, qword [r13]
+	mov r13, 10
+	mov r13, 10
+	mov r13, 10
+	mov rdi, r13
 	call exit
 	mov rax, 0x02000001
 	mov       rdi, 0
